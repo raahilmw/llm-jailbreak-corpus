@@ -1,4 +1,9 @@
-# ai-sec — ai
+# ai-sec
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 13955 | reasoning: 0
+- source: deep harvest
 
 # LLM/AI Security — Referensi Red Team
 

@@ -1,4 +1,9 @@
-# Microsoft Graph: List Directory Role Assignments
+# 03-entra-id-graph
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 1652 | reasoning: 0
+- source: deep harvest
 
 ## Endpoint
 

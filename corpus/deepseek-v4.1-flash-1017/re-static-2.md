@@ -1,4 +1,9 @@
-# deepseek-v4.1-flash-1017 — re-static
+# re-static-2
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 21656 | reasoning: 0
+- source: deep harvest
 
 # Static Triage Pipeline — Unknown Sample
 

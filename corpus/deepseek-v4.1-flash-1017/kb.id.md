@@ -1,4 +1,9 @@
-# deepseek-v4.1-flash-1017 cyber knowledge base
+# kb.id
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 1768192 | reasoning: 0
+- source: deep harvest
 
 100 topics, harvested from deepseek-v4.1-flash-1017.
 

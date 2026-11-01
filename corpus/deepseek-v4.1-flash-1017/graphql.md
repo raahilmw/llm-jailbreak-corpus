@@ -1,4 +1,9 @@
-# graphql — api
+# graphql
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 14566 | reasoning: 0
+- source: deep harvest
 
 # GraphQL: Referensi Serangan & Pertahanan (Red Team)
 

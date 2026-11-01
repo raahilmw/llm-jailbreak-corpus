@@ -1,4 +1,9 @@
-# ssti — web
+# ssti
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 22542 | reasoning: 0
+- source: deep harvest
 
 # SSTI: Referensi Engine, Probe, dan RCE
 

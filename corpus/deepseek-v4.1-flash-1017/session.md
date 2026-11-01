@@ -1,4 +1,9 @@
-# session — auth
+# session
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 21423 | reasoning: 0
+- source: deep harvest
 
 # Session Management — Referensi Red Team
 

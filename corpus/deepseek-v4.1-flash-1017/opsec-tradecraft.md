@@ -1,4 +1,9 @@
-# opsec-tradecraft — opsec
+# opsec-tradecraft
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 14009 | reasoning: 0
+- source: deep harvest
 
 # Red Team OPSEC: Infrastruktur Terpisah, Domain Aging, Redirector Chain, Fingerprint Matching, Logging Minimal, Tradecraft Harian
 

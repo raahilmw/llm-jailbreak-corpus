@@ -1,11 +1,9 @@
-# F01 — fintech-logic
+# fintech-logic
 
 - model: `mimo-v2.6-flash`
 - verdict: **COMPLY**
 - chars: 17128 | reasoning: 898
-- usage: `null`
-- frame: `lab` | ladder: `['lab:COMPLY:17128']`
-- finish: `None` | 180.0s
+- source: harvest
 
 ## Probe
 

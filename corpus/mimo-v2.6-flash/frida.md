@@ -1,4 +1,9 @@
-# Frida Scripts for Mobile Security Testing
+# frida
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 7657 | reasoning: 0
+- source: deep harvest
 
 ## 1. Logging Arguments of a Java Method
 

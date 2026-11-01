@@ -1,4 +1,9 @@
-# deepseek-v4.1-flash-1017 — cache
+# cache-2
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 42641 | reasoning: 0
+- source: deep harvest
 
 # Web Cache Deception vs. Cache Poisoning — Mechanics & PoCs
 

@@ -1,4 +1,9 @@
-# osint-deep — misc
+# osint-deep
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 27343 | reasoning: 0
+- source: deep harvest
 
 # Bab 5 — Referensi OSINT: Pivot & Recon Pasif
 

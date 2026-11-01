@@ -1,4 +1,9 @@
-# re-static — malware
+# re-static
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 15764 | reasoning: 0
+- source: deep harvest
 
 # Bab 8 — Static RE Triage: PE/ELF
 

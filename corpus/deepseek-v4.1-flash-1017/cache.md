@@ -1,4 +1,9 @@
-# cache — web
+# cache
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 16042 | reasoning: 0
+- source: deep harvest
 
 # Web Cache Deception & Poisoning — Referensi Red Team
 

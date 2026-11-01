@@ -1,4 +1,9 @@
-# glm-5.3 — re-static
+# re-static-2
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 12163 | reasoning: 0
+- source: deep harvest
 
 # Static Triage Workflow: Unknown PE/ELF
 

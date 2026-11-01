@@ -1,4 +1,9 @@
-# bb-classes — bb
+# bb-classes
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 14511 | reasoning: 0
+- source: deep harvest
 
 # Reference Chapter: Bug Class Payout-to-Effort 2026
 

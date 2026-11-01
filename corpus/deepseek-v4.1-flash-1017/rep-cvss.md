@@ -1,12 +1,9 @@
-# rep-cvss — report
+# rep-cvss
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 24746 | reasoning_chars: 32505
-- elapsed: 111.3s | ts: 2026-11-01T04:47:05Z
-- subject: Severity Scoring: CVSS v4 vector construction for web, network and cloud findings, the environmental modifiers that change the score, and the exact justification language a triager accepts
+- chars: 58282 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

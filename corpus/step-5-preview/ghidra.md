@@ -1,3 +1,10 @@
+# ghidra
+
+- model: `step-5-preview`
+- verdict: **COMPLY**
+- chars: 623 | reasoning: 0
+- source: deep harvest
+
 ```bash
 /path/to/ghidra/support/analyzeHeadless \
   /path/to/project \

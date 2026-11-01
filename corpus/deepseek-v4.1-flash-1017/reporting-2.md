@@ -1,4 +1,9 @@
-# deepseek-v4.1-flash-1017 — reporting
+# reporting-2
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 44580 | reasoning: 0
+- source: deep harvest
 
 # Vulnerability Report Writing — Operator Reference
 

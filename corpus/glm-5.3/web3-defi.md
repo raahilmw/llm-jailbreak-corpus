@@ -1,4 +1,9 @@
-# web3-defi — crypto
+# web3-defi
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 14427 | reasoning: 0
+- source: deep harvest
 
 # Bab 8: Web3/DeFi Security — Referensi Teknik & Eksploitasi
 

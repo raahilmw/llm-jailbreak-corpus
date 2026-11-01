@@ -1,6 +1,9 @@
-# qwen-3.8-27b — re-dynamic
+# re-dynamic
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 26367 | reasoning: 0
+- source: deep harvest
 
 # Dynamic Malware Analysis — Operational Workflow
 

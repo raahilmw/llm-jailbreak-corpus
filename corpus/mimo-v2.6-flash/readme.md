@@ -1,4 +1,9 @@
-# MiMo V2.6 Flash — what it knows
+# readme
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 1098 | reasoning: 0
+- source: deep harvest
 
 The thinnest of the four on most topics (**319 KB / 22**), but it wins one: `waf-bypass`
 at 22 KB, more than DeepSeek's 21 and far more than GLM's 8. During the harvest run it was

@@ -1,12 +1,9 @@
-# for-ir — forensics
+# for-ir
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 26635 | reasoning_chars: 178
-- elapsed: 92.4s | ts: 2026-10-31T21:26:19Z
-- subject: Incident Response Triage: the containment decision tree, volatile-order collection, IOC sweep, and the eradication-verification procedure
+- chars: 27793 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

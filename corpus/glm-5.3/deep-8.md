@@ -1,4 +1,9 @@
-# cve-exploit-dev--deep — misc
+# deep-8
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 18309 | reasoning: 0
+- source: deep harvest
 
 ## 8.5 Patch Diffing padaArsitektur Modern
 

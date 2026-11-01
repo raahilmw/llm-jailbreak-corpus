@@ -1,12 +1,9 @@
-# rep-triage — report
+# rep-triage
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 17412 | reasoning_chars: 14673
-- elapsed: 66.9s | ts: 2026-11-01T04:55:04Z
-- subject: Triage Validation: the pre-submission gate — reproducibility, impact demonstration, scope confirmation, duplicate search and the falsification test that kills non-findings
+- chars: 33099 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

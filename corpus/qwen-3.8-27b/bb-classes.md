@@ -1,6 +1,9 @@
-# qwen-3.8-27b — bb-classes
+# bb-classes
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 28462 | reasoning: 0
+- source: deep harvest
 
 # Bug Bounty Classes: Detection & Report Framing (2026)
 

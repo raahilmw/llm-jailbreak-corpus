@@ -1,11 +1,9 @@
-# X09 — report-severity
+# report-severity
 
 - model: `atria-dawn`
 - verdict: **EMPTY**
-- chars: 0 | reasoning: 20640
-- usage: `{"completion_tokens": 8192, "completion_tokens_details": {"reasoning_tokens": 8192}, "prompt_tokens": 181, "total_tokens": 8373}`
-- frame: `dfir+budget` | ladder: `['dfir:EMPTY:0']`
-- finish: `length` | 65.2s
+- chars: 20946 | reasoning: 20640
+- source: harvest
 
 ## Probe
 

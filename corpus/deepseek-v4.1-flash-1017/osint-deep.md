@@ -1,4 +1,9 @@
-# osint-deep — misc
+# osint-deep
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 15529 | reasoning: 0
+- source: deep harvest
 
 # OSINT: Email/Username Pivot, Domain/IP, GitHub Secret Hunting, Metadata, Employee Footprint
 

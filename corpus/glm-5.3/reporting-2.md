@@ -1,4 +1,9 @@
-# glm-5.3 — reporting
+# reporting-2
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 15889 | reasoning: 0
+- source: deep harvest
 
 # Vulnerability Report Writing That Gets Paid
 

@@ -1,4 +1,9 @@
-# Ghidra Headless Analyzer: Run Post-Script and Save Project
+# 09-ghidra-headless
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 2482 | reasoning: 0
+- source: deep harvest
 
 ```bash
 $GHIDRA_HOME/support/analyzeHeadless \

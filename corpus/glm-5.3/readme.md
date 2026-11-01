@@ -1,4 +1,9 @@
-# GLM-5.3 — what it knows
+# readme
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 2714 | reasoning: 0
+- source: deep harvest
 
 Deepest on **EDR internals, C2 tradecraft and detection engineering**, and the only model
 that produced a working sigma rule for the credential-harvester scenario. Weakest on

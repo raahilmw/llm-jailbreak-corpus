@@ -1,12 +1,9 @@
-# mob-api — mobile
+# mob-api
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 71143 | reasoning_chars: 1340
-- elapsed: 163.0s | ts: 2026-10-31T19:19:53Z
-- subject: Mobile API Interception: certificate pinning defeat across OkHttp, TrustManager, network-security-config and native pinning, plus the request-signing scheme recovery and reproduction
+- chars: 73508 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

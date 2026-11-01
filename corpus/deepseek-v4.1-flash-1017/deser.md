@@ -1,4 +1,9 @@
-# deser — web
+# deser
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 22349 | reasoning: 0
+- source: deep harvest
 
 # Insecure Deserialization → RCE: Referensi Red Team
 

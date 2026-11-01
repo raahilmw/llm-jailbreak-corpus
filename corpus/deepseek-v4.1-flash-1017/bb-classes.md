@@ -1,4 +1,9 @@
-# bb-classes — bb
+# bb-classes
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 15931 | reasoning: 0
+- source: deep harvest
 
 # Bab Referensi: Bug Class "Payout-to-Effort 2026"
 

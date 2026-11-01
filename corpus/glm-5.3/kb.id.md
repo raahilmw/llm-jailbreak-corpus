@@ -1,4 +1,9 @@
-# GLM-5.3 cyber knowledge base
+# kb.id
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 1337700 | reasoning: 0
+- source: deep harvest
 
 73 topics, 15 domains. The 10 `--deep` follow-ups live in `raw/` only.
 

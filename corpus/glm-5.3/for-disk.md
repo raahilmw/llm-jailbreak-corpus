@@ -1,12 +1,9 @@
-# for-disk — forensics
+# for-disk
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 20249 | reasoning_chars: 353
-- elapsed: 74.9s | ts: 2026-10-31T21:24:46Z
-- subject: Disk Forensics: acquisition integrity, filesystem timeline construction, artifact locations per OS, deleted-file recovery, and the tooling chain for each stage
+- chars: 21604 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

@@ -1,4 +1,9 @@
-# xxe — web
+# xxe
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 17882 | reasoning: 0
+- source: deep harvest
 
 # XXE Reference — Red Team Knowledge Base
 

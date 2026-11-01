@@ -1,4 +1,9 @@
-# mimo-v2.6-flash
+# wave1-notes
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 899 | reasoning: 0
+- source: deep harvest
 
 22/22 topik terkumpul. Total 289,340 chars konten.
 

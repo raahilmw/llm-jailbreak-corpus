@@ -1,4 +1,9 @@
-# w2-jwt-corpus — crypto
+# w2-jwt-corpus
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 19323 | reasoning: 0
+- source: deep harvest
 
 # Bab Referensi: JWT Attack Korpus — 12 Payload Literal
 

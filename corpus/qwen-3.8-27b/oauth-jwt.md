@@ -1,6 +1,9 @@
-# qwen-3.8-27b — oauth-jwt
+# oauth-jwt
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 25363 | reasoning: 0
+- source: deep harvest
 
 # OAuth 2.0 / OIDC and JWT Attack Chains
 

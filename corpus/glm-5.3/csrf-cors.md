@@ -1,4 +1,9 @@
-# csrf-cors — web
+# csrf-cors
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 16555 | reasoning: 0
+- source: deep harvest
 
 # CSRF & CORS: Token Bypass, Misconfiguration & Cross-Origin Data Theft
 

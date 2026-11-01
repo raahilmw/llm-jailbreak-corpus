@@ -1,12 +1,9 @@
-# rep-poc — report
+# rep-poc
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `` | content_chars: 13325 | reasoning_chars: 73191
-- elapsed: 300.1s | ts: 2026-10-31T20:16:48Z
-- subject: Proof-of-Concept Standard: minimal reproducing request, state preconditions, screenshot discipline, redaction rules for secrets, and the evidence bundle structure
+- chars: 87521 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

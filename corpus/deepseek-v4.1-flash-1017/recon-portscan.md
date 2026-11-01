@@ -1,12 +1,9 @@
-# recon-portscan — recon
+# recon-portscan
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 1108 | reasoning_chars: 4973
-- elapsed: 12.7s | ts: 2026-11-01T04:43:31Z
-- subject: Distributed Port and Service Scanning: masscan/ZMap sweep design, rate math, nmap version-detection tuning, UDP strategy, and evading scan detection
+- chars: 7072 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

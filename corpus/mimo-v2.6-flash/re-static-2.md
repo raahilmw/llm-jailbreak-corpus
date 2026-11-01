@@ -1,4 +1,10 @@
-# mimo-v2.6-flash — re-static
+# re-static-2
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 16268 | reasoning: 0
+- source: deep harvest
+
 # SOURCE: upstream-2 (mimo-v2.6-pro), prompt: mimo-2.6-agents.md, non-streaming
 
 Use cheap metadata first, then structure, entropy, imports, strings, runtime identification, packer detection, language-specific recovery, decompilation. Preserve original hash; work from copy.

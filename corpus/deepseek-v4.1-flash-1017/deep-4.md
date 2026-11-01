@@ -1,4 +1,9 @@
-# saml--deep — auth
+# deep-4
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 11754 | reasoning: 0
+- source: deep harvest
 
 ## Varian XSW Lanjutan (di luar XSW #1–#8 klasik)
 

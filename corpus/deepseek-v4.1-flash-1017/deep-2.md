@@ -1,4 +1,9 @@
-# ad-acl-deleg--deep — ad
+# deep-2
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 16093 | reasoning: 0
+- source: deep harvest
 
 ## Referensi Lanjutan: ACL Abuse, Delegation & BloodHound Cypher (Lanjutan)
 

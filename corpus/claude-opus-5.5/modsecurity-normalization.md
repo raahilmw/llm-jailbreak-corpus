@@ -1,3 +1,10 @@
+# modsecurity-normalization
+
+- model: `claude-opus-5.5`
+- verdict: **COMPLY**
+- chars: 1765 | reasoning: 0
+- source: deep harvest
+
 **CRS request normalization order** (ModSecurity v2/v3, phase 1/2):
 
 1. **Raw read** — body read per `SecRequestBodyAccess`, limited by `SecRequestBodyLimit`/`SecRequestBodyNoFilesLimit`.

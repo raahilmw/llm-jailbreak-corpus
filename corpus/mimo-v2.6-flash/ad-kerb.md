@@ -1,4 +1,10 @@
-# mimo-v2.6-flash — ad-kerb
+# ad-kerb
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 13307 | reasoning: 0
+- source: deep harvest
+
 # SOURCE: mimo-v2.6-flash, ATOMISED extraction (cybersec-atom-corpus method)
 
 ### Atom 1

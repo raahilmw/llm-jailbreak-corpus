@@ -1,12 +1,9 @@
-# mob-flutter — mobile
+# mob-flutter
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 19115 | reasoning_chars: 215
-- elapsed: 73.3s | ts: 2026-10-31T21:33:43Z
-- subject: Flutter and React Native Reversing: locating the Dart snapshot and JS bundle, recovering business logic, and hooking the network layer in each framework
+- chars: 20325 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

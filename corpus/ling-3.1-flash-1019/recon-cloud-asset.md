@@ -1,11 +1,9 @@
-# X08 — recon-cloud-asset
+# recon-cloud-asset
 
 - model: `ling-3.1-flash-1019`
 - verdict: **COMPLY**
 - chars: 14860 | reasoning: 5530
-- usage: `{"prompt_tokens": 135, "completion_tokens": 6444, "total_tokens": 6579, "cost": 0, "is_byok": false, "prompt_tokens_details": {"cached_tokens": 0, "audio_tokens": 0, "video_tokens": 0}, "cost_details": {"upstream_inference_cost": null, "upstream_inference_prompt_cost": 0, "upstream_inference_completions_cost": 0}, "completion_tokens_details": {"reasoning_tokens": 1383, "reasoning_tokens_estimated": true, "image_tokens": 0}, "cache_creation_input_tokens": 0, "market_cost": 0}`
-- frame: `lab` | ladder: `['lab:COMPLY:14860']`
-- finish: `stop` | 58.1s
+- source: harvest
 
 ## Probe
 

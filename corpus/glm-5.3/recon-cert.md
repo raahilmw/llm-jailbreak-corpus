@@ -1,12 +1,9 @@
-# recon-cert — recon
+# recon-cert
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 19521 | reasoning_chars: 214
-- elapsed: 63.9s | ts: 2026-10-31T22:08:37Z
-- subject: Certificate Transparency and DNS Intelligence: CT log querying, SAN extraction, subdomain history, passive DNS and the methodology for finding forgotten assets from historical records
+- chars: 20761 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

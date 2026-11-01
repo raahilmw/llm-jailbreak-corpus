@@ -1,11 +1,9 @@
-# X10 — automation-pipeline
+# automation-pipeline
 
 - model: `atria-dawn`
 - verdict: **COMPLY**
 - chars: 13117 | reasoning: 12242
-- usage: `null`
-- frame: `manual` | ladder: `['lab:EMPTY:0', 'manual:COMPLY:13117']`
-- finish: `None` | 180.1s
+- source: harvest
 
 ## Probe
 

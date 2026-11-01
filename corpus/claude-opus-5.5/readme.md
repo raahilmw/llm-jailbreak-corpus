@@ -1,4 +1,9 @@
-# Claude Opus 5.5 — what it knows
+# readme
+
+- model: `claude-opus-5.5`
+- verdict: **COMPLY**
+- chars: 3324 | reasoning: 0
+- source: deep harvest
 
 The most **concise and operational** of the three: least padding, highest density per
 byte, fastest (5 s). Its 12-domain answers are shorter than the others, but the extra

@@ -1,4 +1,10 @@
-# mimo-v2.6-flash — reporting
+# reporting-2
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 8407 | reasoning: 0
+- source: deep harvest
+
 # SOURCE: upstream-2 (mimo-v2.6-pro), prompt: mimo-2.6-agents.md + benchmark frame + lab details, streaming
 
 Suite `TRIAGE-CAL-v1` — triage calibration test cases. Every case: input (before), calibrated output (after), pass criteria, regression trap (must FAIL validation).

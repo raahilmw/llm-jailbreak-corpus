@@ -1,6 +1,9 @@
-# qwen-3.8-27b — bb-recon
+# bb-recon
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 7188 | reasoning: 0
+- source: deep harvest
 
 # Bug Bounty Recon Pipeline
 

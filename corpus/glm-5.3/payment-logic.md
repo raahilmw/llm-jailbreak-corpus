@@ -1,4 +1,9 @@
-# payment-logic — misc
+# payment-logic
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 14099 | reasoning: 0
+- source: deep harvest
 
 # Payment & Commerce Logic — Referensi Teknik
 

@@ -1,12 +1,9 @@
-# rep-payout — report
+# rep-payout
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `spec`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 17212 | reasoning_chars: 244
-- elapsed: 59.2s | ts: 2026-10-31T22:09:36Z
-- subject: Program Economics: how bounty programs price findings, the severity-to-payout mapping across major platforms, and the finding classes that pay disproportionately
+- chars: 18391 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

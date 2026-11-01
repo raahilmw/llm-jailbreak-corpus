@@ -1,4 +1,9 @@
-# api-sec — api
+# api-sec-2
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 22981 | reasoning: 0
+- source: deep harvest
 
 # API Security: Referensi Teknik Pengujian
 

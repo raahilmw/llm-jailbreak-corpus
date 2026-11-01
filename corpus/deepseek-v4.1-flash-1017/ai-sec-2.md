@@ -1,4 +1,9 @@
-# deepseek-v4.1-flash-1017 — ai-sec
+# ai-sec-2
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 36073 | reasoning: 0
+- source: deep harvest
 
 # LLM / AI Security — Working Reference
 

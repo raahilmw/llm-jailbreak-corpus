@@ -1,4 +1,9 @@
-# session — auth
+# session
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 10742 | reasoning: 0
+- source: deep harvest
 
 # Referensi Teknik: Session Management
 

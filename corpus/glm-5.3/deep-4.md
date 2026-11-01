@@ -1,4 +1,9 @@
-# hardware-uart-jtag--deep — hardware
+# deep-4
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 10900 | reasoning: 0
+- source: deep harvest
 
 ## 3.6 Sub-topik Lanjutan Hardware Hacking
 

@@ -1,12 +1,9 @@
-# cry-audit — crypto
+# cry-audit
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `detect`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 16683 | reasoning_chars: 43574
-- elapsed: 133.4s | ts: 2026-11-01T05:38:26Z
-- subject: Smart Contract Audit Checklist: the full defect taxonomy with the code pattern that indicates each and the test that proves it
+- chars: 61281 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

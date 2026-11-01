@@ -1,12 +1,9 @@
-# recon-asm — recon
+# recon-asm
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `prefill`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 11032 | reasoning_chars: 65441
-- elapsed: 223.1s | ts: 2026-10-31T19:46:47Z
-- subject: Attack Surface Inventory: turning a domain seed into a ranked asset list — host discovery, HTTP fingerprinting, technology tagging, ownership validation, and scoring assets by exploitability
+- chars: 77072 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

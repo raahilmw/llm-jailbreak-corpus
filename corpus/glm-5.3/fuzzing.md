@@ -1,4 +1,9 @@
-# fuzzing — misc
+# fuzzing
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 13933 | reasoning: 0
+- source: deep harvest
 
 # Fuzzing Reference — Red Team Knowledge Base
 

@@ -1,4 +1,9 @@
-# re-static — malware
+# re-static
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 17313 | reasoning: 0
+- source: deep harvest
 
 # Static RE Triage: PE/ELF
 

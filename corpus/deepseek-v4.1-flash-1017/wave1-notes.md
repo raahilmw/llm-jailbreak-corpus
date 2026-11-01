@@ -1,4 +1,9 @@
-# deepseek-v4.1-flash-1017
+# wave1-notes
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 540 | reasoning: 0
+- source: deep harvest
 
 22/22 topik terkumpul. Total 373,514 chars konten.
 

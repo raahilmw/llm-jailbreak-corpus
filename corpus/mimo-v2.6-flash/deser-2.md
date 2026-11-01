@@ -1,4 +1,10 @@
-# mimo-v2.6-flash — deser
+# deser-2
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 19927 | reasoning: 0
+- source: deep harvest
+
 # SOURCE: router mimo-v2.6-flash, ATOMISED extraction (cybersec-atom-corpus method)
 
 ### Atom 2

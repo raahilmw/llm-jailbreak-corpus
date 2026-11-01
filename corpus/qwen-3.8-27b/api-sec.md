@@ -1,6 +1,9 @@
-# qwen-3.8-27b — api-sec
+# api-sec
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 22199 | reasoning: 0
+- source: deep harvest
 
 # API Security Testing Patterns
 

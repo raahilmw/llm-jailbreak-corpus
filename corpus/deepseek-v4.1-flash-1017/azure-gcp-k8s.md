@@ -1,4 +1,9 @@
-# azure-gcp-k8s — cloud
+# azure-gcp-k8s
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 23235 | reasoning: 0
+- source: deep harvest
 
 # Bab Referensi: Cloud & Container Red Team
 

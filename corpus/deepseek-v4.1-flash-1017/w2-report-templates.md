@@ -1,4 +1,9 @@
-# w2-report-templates — bb
+# w2-report-templates
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 18353 | reasoning: 0
+- source: deep harvest
 
 # Template Report Bug Bounty — Field-per-Field Paste-Ready
 

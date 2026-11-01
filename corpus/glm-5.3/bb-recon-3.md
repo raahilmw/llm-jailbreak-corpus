@@ -1,4 +1,9 @@
-# glm-5.3 — bb-recon
+# bb-recon-3
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 8258 | reasoning: 0
+- source: deep harvest
 
 # Bug Bounty Recon Pipeline — Chained
 

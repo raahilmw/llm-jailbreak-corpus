@@ -1,4 +1,9 @@
-# bb-recon — bb
+# bb-recon
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 19210 | reasoning: 0
+- source: deep harvest
 
 # Bug Bounty Recon 2026 — Referensi Teknis
 

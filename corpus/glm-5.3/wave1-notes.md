@@ -1,4 +1,9 @@
-# glm-5.3
+# wave1-notes
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 696 | reasoning: 0
+- source: deep harvest
 
 22/22 topik terkumpul. Total 248,021 chars konten.
 

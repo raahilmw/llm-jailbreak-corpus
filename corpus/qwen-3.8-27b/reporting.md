@@ -1,6 +1,9 @@
-# qwen-3.8-27b — reporting
+# reporting
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 21015 | reasoning: 0
+- source: deep harvest
 
 # Vulnerability Report Writing That Gets Paid
 

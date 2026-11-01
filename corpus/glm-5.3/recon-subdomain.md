@@ -1,12 +1,9 @@
-# recon-subdomain — recon
+# recon-subdomain
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 41636 | reasoning_chars: 2446
-- elapsed: 144.1s | ts: 2026-10-31T20:06:00Z
-- subject: Subdomain Enumeration at Scale: passive sources (crt.sh, Censys, SecurityTrails, VirusTotal), DNS brute force with resolution filtering, permutation engines, and wildcard-detection logic
+- chars: 45111 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

@@ -1,12 +1,9 @@
-# recon-asm — recon
+# recon-asm
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 21626 | reasoning_chars: 12854
-- elapsed: 68.0s | ts: 2026-11-01T04:39:29Z
-- subject: Attack Surface Inventory: turning a domain seed into a ranked asset list — host discovery, HTTP fingerprinting, technology tagging, ownership validation, and scoring assets by exploitability
+- chars: 35513 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

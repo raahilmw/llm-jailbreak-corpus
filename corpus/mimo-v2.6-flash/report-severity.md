@@ -1,11 +1,9 @@
-# X09 — report-severity
+# report-severity
 
 - model: `mimo-v2.6-flash`
 - verdict: **COMPLY**
 - chars: 29811 | reasoning: 49195
-- usage: `null`
-- frame: `lab` | ladder: `['lab:COMPLY:29811']`
-- finish: `None` | 185.0s
+- source: harvest
 
 ## Probe
 

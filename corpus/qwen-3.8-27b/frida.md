@@ -1,4 +1,9 @@
+# frida
 
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 3533 | reasoning: 0
+- source: deep harvest
 
 ## 1. Logging arguments of a Java method
 

@@ -1,4 +1,9 @@
-# anti-forensics — opsec
+# anti-forensics-2
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 39458 | reasoning: 0
+- source: deep harvest
 
 # Anti-Forensics: Referensi Teknik Tampering & Artefak Sisa
 

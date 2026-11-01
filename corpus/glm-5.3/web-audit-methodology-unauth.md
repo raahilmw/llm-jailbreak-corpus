@@ -1,4 +1,9 @@
-# Web Application Security Audit — Unauthenticated Methodology
+# web-audit-methodology-unauth
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 9166 | reasoning: 0
+- source: deep harvest
 
 ## Phase 1: Fingerprinting
 

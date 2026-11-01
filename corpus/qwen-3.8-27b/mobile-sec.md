@@ -1,6 +1,9 @@
-# qwen-3.8-27b — mobile-sec
+# mobile-sec
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 24722 | reasoning: 0
+- source: deep harvest
 
 # Android App Security Testing Pipeline
 

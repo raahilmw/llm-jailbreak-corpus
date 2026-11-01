@@ -1,4 +1,9 @@
-# w2-stego-and-crypto-corpus — misc
+# w2-stego-and-crypto-corpus
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 18273 | reasoning: 0
+- source: deep harvest
 
 # CTF-Style Triage Cheatsheet — Stego + Crypto
 

@@ -1,4 +1,9 @@
-# re-dynamic — malware
+# re-dynamic
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 20952 | reasoning: 0
+- source: deep harvest
 
 # Dynamic Malware Analysis: Referensi Teknis Tim Red Team
 

@@ -1,6 +1,9 @@
-# qwen-3.8-27b — re-static
+# re-static
 
-
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 25654 | reasoning: 0
+- source: deep harvest
 
 # Static RE Triage: Unknown Binary
 

@@ -1,4 +1,9 @@
-# ci-cd-supply-chain — misc
+# ci-cd-supply-chain-2
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 16752 | reasoning: 0
+- source: deep harvest
 
 # Referensi: Serangan CI/CD & Supply Chain
 

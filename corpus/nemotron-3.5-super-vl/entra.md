@@ -1,3 +1,10 @@
+# entra
+
+- model: `nemotron-3.5-super-vl`
+- verdict: **COMPLY**
+- chars: 947 | reasoning: 0
+- source: deep harvest
+
 **Endpoint**
 
 ```

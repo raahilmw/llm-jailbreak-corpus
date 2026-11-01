@@ -1,4 +1,9 @@
-# reporting — bb
+# reporting
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 13501 | reasoning: 0
+- source: deep harvest
 
 # Referensi: Report Writing Berbayar (VDP/Bug Bounty)
 

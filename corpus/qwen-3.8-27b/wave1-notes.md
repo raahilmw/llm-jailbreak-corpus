@@ -1,4 +1,9 @@
-# qwen-3.8-27b
+# wave1-notes
+
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 597 | reasoning: 0
+- source: deep harvest
 
 22/22 topik terkumpul. Total 356,823 chars konten.
 

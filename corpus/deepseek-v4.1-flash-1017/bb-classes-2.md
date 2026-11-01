@@ -1,4 +1,9 @@
-# deepseek-v4.1-flash-1017 — bb-classes
+# bb-classes-2
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 43204 | reasoning: 0
+- source: deep harvest
 
 # High-ROI Bug Classes — 2026 Operator Playbook
 

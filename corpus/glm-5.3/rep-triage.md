@@ -1,12 +1,9 @@
-# rep-triage — report
+# rep-triage
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 35603 | reasoning_chars: 1833
-- elapsed: 109.0s | ts: 2026-10-31T20:31:55Z
-- subject: Triage Validation: the pre-submission gate — reproducibility, impact demonstration, scope confirmation, duplicate search and the falsification test that kills non-findings
+- chars: 38450 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

@@ -1,4 +1,9 @@
-# graphql — api
+# graphql
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 13346 | reasoning: 0
+- source: deep harvest
 
 # Referensi Teknik: GraphQL Attack Surface
 

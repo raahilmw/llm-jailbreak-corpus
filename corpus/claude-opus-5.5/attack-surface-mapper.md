@@ -1,3 +1,10 @@
+# attack-surface-mapper
+
+- model: `claude-opus-5.5`
+- verdict: **COMPLY**
+- chars: 12391 | reasoning: 0
+- source: deep harvest
+
 ```python
 #!/usr/bin/env python3
 """Attack-surface mapper: CT subdomains, HTTP fingerprint, JS endpoint extraction,

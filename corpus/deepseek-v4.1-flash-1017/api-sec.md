@@ -1,4 +1,9 @@
-# api-sec — api
+# api-sec
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 17773 | reasoning: 0
+- source: deep harvest
 
 # API Security: Hunting Reference
 

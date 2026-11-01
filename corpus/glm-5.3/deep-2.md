@@ -1,4 +1,9 @@
-# postex-linux--deep — linux
+# deep-2
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 10011 | reasoning: 0
+- source: deep harvest
 
 ## 12.7 Varian Teknik per Versi/Distribusi
 

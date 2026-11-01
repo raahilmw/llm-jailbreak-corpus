@@ -1,4 +1,9 @@
-# glm-5.3 — mobile-sec
+# mobile-sec
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 1046 | reasoning: 0
+- source: deep harvest
 
 # Android App Security Testing Pipeline
 

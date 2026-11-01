@@ -1,4 +1,9 @@
-# Qwen 3.8 27B — what it knows
+# readme
+
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 1262 | reasoning: 0
+- source: deep harvest
 
 Second-broadest source in the 22-topic corpus: **445 KB across 22 topics**, every topic
 answered. Not the deepest on any single one except static reversing, but consistently

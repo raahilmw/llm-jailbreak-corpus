@@ -1,4 +1,9 @@
-# bb-recon — bb
+# bb-recon-2
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 17399 | reasoning: 0
+- source: deep harvest
 
 # Bab 12: Bug Bounty Recon Pipeline 2026
 

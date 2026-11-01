@@ -1,4 +1,9 @@
-# grpc — api
+# grpc
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 16543 | reasoning: 0
+- source: deep harvest
 
 # gRPC: Reflection Enumeration, Method Fuzzing, Protobuf Field Guessing, Authz per Method, Streaming Abuse, grpc-web Testing
 

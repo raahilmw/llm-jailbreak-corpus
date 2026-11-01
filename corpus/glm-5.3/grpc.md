@@ -1,4 +1,9 @@
-# grpc — api
+# grpc
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 14828 | reasoning: 0
+- source: deep harvest
 
 # gRPC Attack Surface — Referensi Teknik Red Team
 

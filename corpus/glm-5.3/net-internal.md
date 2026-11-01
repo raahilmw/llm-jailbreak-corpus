@@ -1,4 +1,9 @@
-# net-internal — net
+# net-internal
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 30253 | reasoning: 0
+- source: deep harvest
 
 # Bab 9 — Referensi: Adversary-in-the-Middle di Internal Network
 

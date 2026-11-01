@@ -1,11 +1,9 @@
-# V07 — deserialization-java
+# deserialization-java-2
 
 - model: `atria-dawn`
 - verdict: **EMPTY**
-- chars: 0 | reasoning: 2246
-- usage: `null`
-- frame: `dfir` | ladder: `['dfir:EMPTY:0']`
-- finish: `None` | 190.1s
+- chars: 2540 | reasoning: 2246
+- source: harvest
 
 ## Probe
 

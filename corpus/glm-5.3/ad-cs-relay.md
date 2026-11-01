@@ -1,4 +1,9 @@
-# ad-cs-relay — ad
+# ad-cs-relay
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 22046 | reasoning: 0
+- source: deep harvest
 
 # AD CS & NTLM Relay: ESC1–ESC8 with Certipy
 

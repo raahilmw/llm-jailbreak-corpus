@@ -1,3 +1,10 @@
+# sigma-rule-credential-harvester
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 7662 | reasoning: 0
+- source: deep harvest
+
 Sigma Rule (Process Creation — Sysmon EID 1 / Win EID 4688)
 
 ```yaml

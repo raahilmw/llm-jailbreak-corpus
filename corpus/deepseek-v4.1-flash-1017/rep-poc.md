@@ -1,12 +1,9 @@
-# rep-poc — report
+# rep-poc
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 28825 | reasoning_chars: 24999
-- elapsed: 98.1s | ts: 2026-11-01T04:52:39Z
-- subject: Proof-of-Concept Standard: minimal reproducing request, state preconditions, screenshot discipline, redaction rules for secrets, and the evidence bundle structure
+- chars: 54829 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

@@ -1,4 +1,9 @@
-# anti-forensics — opsec
+# anti-forensics
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 39388 | reasoning: 0
+- source: deep harvest
 
 # Anti-Forensics: Reference of Tampering Techniques & Residual Artifacts
 

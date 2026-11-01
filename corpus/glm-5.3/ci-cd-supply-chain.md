@@ -1,4 +1,9 @@
-# ci-cd-supply-chain — misc
+# ci-cd-supply-chain
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 16800 | reasoning: 0
+- source: deep harvest
 
 # Reference: CI/CD & Supply Chain Attacks
 

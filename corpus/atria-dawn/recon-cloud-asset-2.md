@@ -1,11 +1,9 @@
-# X08 — recon-cloud-asset
+# recon-cloud-asset-2
 
 - model: `atria-dawn`
 - verdict: **EMPTY**
-- chars: 0 | reasoning: 30555
-- usage: `{"completion_tokens": 8192, "prompt_tokens": 190, "total_tokens": 8382}`
-- frame: `lab+budget` | ladder: `['lab:EMPTY:0']`
-- finish: `length` | 13.9s
+- chars: 30848 | reasoning: 30555
+- source: harvest
 
 ## Probe
 

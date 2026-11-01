@@ -1,4 +1,10 @@
-# mimo-v2.6-flash — re-dynamic
+# re-dynamic-2
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 18793 | reasoning: 0
+- source: deep harvest
+
 # SOURCE: upstream-2 (mimo-v2.6-pro), prompt: mimo-2.6-agents.md, non-streaming
 
 Build two-tier lab: disposable FLARE-VM guest for manual reversing, CAPE guest pool for automated detonation. Keep management plane separate, route malware traffic through INetSim/FakeNet-NG, then combine API tracing, memory scanning, dumps, and import reconstruction.

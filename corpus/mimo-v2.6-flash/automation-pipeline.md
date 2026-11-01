@@ -1,11 +1,9 @@
-# X10 — automation-pipeline
+# automation-pipeline
 
 - model: `mimo-v2.6-flash`
 - verdict: **COMPLY**
 - chars: 3192 | reasoning: 16861
-- usage: `null`
-- frame: `manual` | ladder: `['lab:EMPTY:0', 'manual:COMPLY:3192']`
-- finish: `None` | 193.9s
+- source: harvest
 
 ## Probe
 

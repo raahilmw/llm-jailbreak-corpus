@@ -1,4 +1,9 @@
-# DeepSeek V4.1 Flash 1017 — what it knows
+# readme
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 2420 | reasoning: 0
+- source: deep harvest
 
 The **broadest and fastest** source in this repo: deepest on cloud enumeration, mobile
 instrumentation and tooling, 12/12 domains answered, 10 s average. If you only read one

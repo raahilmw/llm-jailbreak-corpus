@@ -1,4 +1,9 @@
-# ssrf — web
+# ssrf
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 13866 | reasoning: 0
+- source: deep harvest
 
 # SSRF: Endpoint Metadata Cloud & Teknik Bypass Filter
 

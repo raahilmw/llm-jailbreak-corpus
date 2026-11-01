@@ -1,4 +1,9 @@
-# idor-bola — auth
+# idor-bola
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 8996 | reasoning: 0
+- source: deep harvest
 
 # IDOR/BOLA — Referensi Pola ID, Enumerasi, dan Triage
 

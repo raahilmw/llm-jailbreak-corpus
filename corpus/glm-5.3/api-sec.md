@@ -1,4 +1,9 @@
-# api-sec — api
+# api-sec
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 22974 | reasoning: 0
+- source: deep harvest
 
 # API Security: Testing Technique Reference
 

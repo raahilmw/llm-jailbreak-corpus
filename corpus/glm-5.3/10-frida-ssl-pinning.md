@@ -1,4 +1,9 @@
-# Frida Scripts
+# 10-frida-ssl-pinning
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 5157 | reasoning: 0
+- source: deep harvest
 
 ## 1. Log Arguments of a Java Method
 

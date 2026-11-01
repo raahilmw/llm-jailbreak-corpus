@@ -1,4 +1,9 @@
-# ai-sec — ai
+# ai-sec
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 25139 | reasoning: 0
+- source: deep harvest
 
 # LLM/AI Security: Attack Taxonomy & Reference
 

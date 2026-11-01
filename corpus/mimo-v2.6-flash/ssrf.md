@@ -1,4 +1,10 @@
-# mimo-v2.6-flash — ssrf
+# ssrf
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 19887 | reasoning: 0
+- source: deep harvest
+
 # SOURCE: mimo-v2.6-flash, ATOMISED extraction (cybersec-atom-corpus method)
 
 ### Atom 1

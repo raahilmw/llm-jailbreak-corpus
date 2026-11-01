@@ -1,11 +1,9 @@
-# V05 — race-condition
+# race-condition
 
 - model: `atria-dawn`
 - verdict: **EMPTY**
-- chars: 0 | reasoning: 32869
-- usage: `{"completion_tokens": 8192, "completion_tokens_details": {"reasoning_tokens": 8192}, "prompt_tokens": 184, "total_tokens": 8376}`
-- frame: `manual` | ladder: `['manual:EMPTY:0']`
-- finish: `length` | 68.4s
+- chars: 33143 | reasoning: 32869
+- source: harvest
 
 ## Probe
 

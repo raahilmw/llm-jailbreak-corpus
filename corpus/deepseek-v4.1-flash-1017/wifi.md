@@ -1,4 +1,9 @@
-# wifi — net
+# wifi
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 15938 | reasoning: 0
+- source: deep harvest
 
 # WiFi: WPA2/WPA3 Handshake Capture, PMKID, Deauth, Evil Twin, WPS, SAE Downgrade
 

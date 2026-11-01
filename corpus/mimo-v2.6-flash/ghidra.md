@@ -1,3 +1,10 @@
+# ghidra
+
+- model: `mimo-v2.6-flash`
+- verdict: **COMPLY**
+- chars: 2178 | reasoning: 0
+- source: deep harvest
+
 ```bash
 analyzeHeadless /path/to/project_dir ProjectName \
   -import /path/to/binary \

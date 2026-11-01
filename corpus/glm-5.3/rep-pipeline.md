@@ -1,12 +1,9 @@
-# rep-pipeline — report
+# rep-pipeline
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 63812 | reasoning_chars: 1037
-- elapsed: 173.8s | ts: 2026-10-31T20:11:48Z
-- subject: Bug Bounty Pipeline: target selection, scope parsing, recon-to-testing handoff, evidence capture discipline, duplicate avoidance and the submission sequence
+- chars: 65848 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

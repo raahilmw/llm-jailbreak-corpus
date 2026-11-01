@@ -1,4 +1,9 @@
+# ghidra
 
+- model: `qwen-3.8-27b`
+- verdict: **COMPLY**
+- chars: 418 | reasoning: 0
+- source: deep harvest
 
 ```bash
 analyzeHeadless /path/to/project myProject \

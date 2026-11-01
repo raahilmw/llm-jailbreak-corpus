@@ -1,4 +1,9 @@
-# smuggling — web
+# smuggling
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 10581 | reasoning: 0
+- source: deep harvest
 
 # HTTP Request Smuggling — Referensi Teknik
 

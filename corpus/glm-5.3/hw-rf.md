@@ -1,12 +1,9 @@
-# hw-rf — hw
+# hw-rf
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 18942 | reasoning_chars: 769
-- elapsed: 66.4s | ts: 2026-10-31T22:05:48Z
-- subject: RF and SDR Analysis: signal identification, modulation recognition, replay and jamming classes, and the GNU Radio / HackRF workflow
+- chars: 20685 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

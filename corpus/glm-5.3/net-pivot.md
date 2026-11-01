@@ -1,12 +1,9 @@
-# net-pivot — ad
+# net-pivot
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 31587 | reasoning_chars: 1444
-- elapsed: 100.7s | ts: 2026-10-31T18:10:39Z
-- subject: Network Pivoting and Tunneling: SOCKS proxy chains, ligolo-ng, chisel, SSH tunneling modes, port forwarding versus reverse tunnels, and routing across multi-homed hosts
+- chars: 34042 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

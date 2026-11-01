@@ -1,12 +1,9 @@
-# recon-cert — recon
+# recon-cert
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 26126 | reasoning_chars: 32751
-- elapsed: 118.5s | ts: 2026-11-01T06:20:53Z
-- subject: Certificate Transparency and DNS Intelligence: CT log querying, SAN extraction, subdomain history, passive DNS and the methodology for finding forgotten assets from historical records
+- chars: 59903 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

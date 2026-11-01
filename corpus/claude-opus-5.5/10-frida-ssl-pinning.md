@@ -1,3 +1,10 @@
+# 10-frida-ssl-pinning
+
+- model: `claude-opus-5.5`
+- verdict: **COMPLY**
+- chars: 2519 | reasoning: 0
+- source: deep harvest
+
 **1. Log Java method args**
 
 ```javascript

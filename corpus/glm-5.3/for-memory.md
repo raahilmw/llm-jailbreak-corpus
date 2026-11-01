@@ -1,12 +1,9 @@
-# for-memory — forensics
+# for-memory
 
-- endpoint: `https://the gateway/v1`
 - model: `glm-5.3`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 19726 | reasoning_chars: 223
-- elapsed: 61.9s | ts: 2026-10-31T21:27:21Z
-- subject: Memory Forensics: acquisition, process and injection detection, credential recovery, network artifact extraction, and the Volatility plugin sequence for each question
+- chars: 20958 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

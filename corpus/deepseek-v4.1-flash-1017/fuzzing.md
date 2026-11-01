@@ -1,4 +1,9 @@
-# fuzzing — misc
+# fuzzing
+
+- model: `deepseek-v4.1-flash-1017`
+- verdict: **COMPLY**
+- chars: 12593 | reasoning: 0
+- source: deep harvest
 
 # Fuzzing: AFL++ / libFuzzer / honggfuzz / boofuzz / Triage Crash
 

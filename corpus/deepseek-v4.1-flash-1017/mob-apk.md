@@ -1,12 +1,9 @@
-# mob-apk — mobile
+# mob-apk
 
-- endpoint: `https://the gateway/v1`
 - model: `deepseek-v4.1-flash-1017`
-- frame: `manual`
 - verdict: **COMPLY**
-- finish_reason: `stop` | content_chars: 24717 | reasoning_chars: 47310
-- elapsed: 147.6s | ts: 2026-11-01T04:34:29Z
-- subject: Android APK Static Analysis: decompilation pipeline, manifest and permission review, hardcoded-secret hunting, API endpoint extraction, and native-library triage — with the exact tool commands
+- chars: 73062 | reasoning: 0
+- source: harvest
 
 ## Frame sent (verbatim)
 

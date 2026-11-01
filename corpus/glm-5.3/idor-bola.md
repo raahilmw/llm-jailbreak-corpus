@@ -1,4 +1,9 @@
-# idor-bola — auth
+# idor-bola
+
+- model: `glm-5.3`
+- verdict: **COMPLY**
+- chars: 11689 | reasoning: 0
+- source: deep harvest
 
 # IDOR / BOLA Reference Guide
 
