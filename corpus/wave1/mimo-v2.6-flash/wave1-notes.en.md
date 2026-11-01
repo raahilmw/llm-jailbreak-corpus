@@ -27,7 +27,7 @@
   describing techniques, not refusals).
 - Files with the `[reasoning trace]` marker keep the reasoning process
   separate from the content.
-- MiMo: 11 topics from bozrouter (the original model), 11 topics from the
+- MiMo: 11 topics from the gateway (the original model), 11 topics from the
   OAO gateway mimo-v2.6-pro (fallback; the SOURCE header in each file
   records the path). Technique: context-engineering prompt plus benchmark
   framing plus atomisation for topics that initially refused.

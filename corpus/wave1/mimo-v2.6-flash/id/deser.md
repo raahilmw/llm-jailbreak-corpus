@@ -1,5 +1,5 @@
 # mimo-v2.6-flash — deser
-# SOURCE: bozrouter mimo-v2.6-flash, ATOMISED extraction (cybersec-atom-corpus method)
+# SOURCE: mimo-v2.6-flash, ATOMISED extraction (cybersec-atom-corpus method)
 
 ### Atom 2
 

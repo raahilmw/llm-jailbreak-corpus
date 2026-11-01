@@ -28,7 +28,7 @@
 - File dengan marker `[reasoning trace]` menyimpan proses reasoning
   terpisah dari konten.
 
-- MiMo: 11 topik dari bozrouter (model asli), 11 topik dari OAO
+- MiMo: 11 topik dari the gateway (model asli), 11 topik dari OAO
   gateway mimo-v2.6-pro (fallback; header SOURCE per file mencatat
   jalur). Teknik: context-engineering prompt + frame benchmark +
   atomisasi untuk topik yang awalnya refuse.
