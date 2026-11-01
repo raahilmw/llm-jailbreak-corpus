@@ -22,10 +22,6 @@ bahasa Indonesia plus terjemahan Inggris yang masih berjalan.
 
 ## The three waves / Tiga gelombang
 
-<p align="center">
-  <img src="assets/method.png" alt="method" width="420"/>
-</p>
-
 **Wave 1 — system-prompt jailbreak.** Four models answered 22 long-form
 security topics each, through a tailored "operating specification" prompt.
 Indonesian prose, exact commands preserved.
@@ -58,10 +54,6 @@ patuh pada pertanyaan faktual polos tanpa jailbreak apa pun.
 ---
 
 ## Numbers / Angka
-
-<p align="center">
-  <img src="assets/models.png" alt="models" width="420"/>
-</p>
 
 Wave 1 + deep harvest (system-prompt jailbreak):
 
@@ -96,10 +88,6 @@ per-file `research/results-kimi3.json`.
 
 ## What is actually in here / Isi sebenarnya
 
-<p align="center">
-  <img src="assets/corpus.png" alt="corpus" width="420"/>
-</p>
-
 ```
 corpus/
   wave1/<model>/id/*.md       22 long-form topics x 4 models
@@ -127,10 +115,6 @@ model sendiri adalah datanya.
 ---
 
 ## Prompts / Prompt
-
-<p align="center">
-  <img src="assets/jailbreak.png" alt="jailbreak" width="420"/>
-</p>
 
 The four wave-1 prompts are complete and paste-ready:
 [`prompts/`](prompts/README.md). They are workspace-policy style documents
