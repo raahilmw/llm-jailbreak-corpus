@@ -1,0 +1,206 @@
+# mail-security--p3 — misc
+
+# Bab Referensi: Evasi Scanning Attachment
+
+## 1. Gambaran Umum Pipeline Scanning
+
+Tipikal stack gateway email yang dihadapi red team:
+
+| Komponen | Produk/contoh | Perilaku |
+|---|---|---|
+| MTA | Postfix 3.8, Exchange 2019 transport | Batas ukuran, header filter |
+| Scanner antivirus | ClamAV 1.3, Windows Defender 1.4x (platform KB | Signature-based, archive depth limit |
+| Sandbox detonasi | FireEye, Any.Run, Cuckoo | Deteksi detonasi makro/binary, timeout 120-180 detik |
+| Content filtering | native MS Exchange rules, Proofpoint, Mimecast | Blocking ext, password-protected archive policy |
+| ATP email | Microsoft Defender for Office365 Safe Attachments | Analisa dinamis, timeout hard ~3 menit |
+
+Prinsip dasar evasi: **scanner punya budget waktu dan kedalaman rekursi terbatas**. Payload apa pun yang membuat resource scan melebihi budget akan meloloskan objek (fail-open di mayoritas deployment default).
+
+---
+
+## 2. Teknik: Archive Nesting (Pembungkusan Berlapis)
+
+### 2.1 Bom Kompresi Klasik
+
+**Apa yang dikirim:** ZIP berisi file RLE/highly-repetitive yang expand ~1000x.
+
+```bash
+# Buat 1 MB yang expand jadi ~10 GB (ratio ~10000:1)
+python3 - <<'EOF'
+import zipfile, zlib
+with zipfile.ZipFile('bomb.zip', 'w', zipfile.ZIP_DEFLATED) as z:
+    z.writestr('payload.txt', b'\x41' * 10_000_000_000 // 10000 * 1)
+EOF
+```
+
+Atau nest:
+
+```bash
+zip -9 a.txt.zip a.txt        # level 1
+zip -9 a.zip.zip a.txt.zip    # level 2
+... # hingga 10-20 lapis
+zip -9 final.zip a.zip.zip ... # kirim ini
+```
+
+**Apa yang muncul gateway-side:**
+- ClamAV default: `MaxRecursion 16`, `MaxFiles 10000`, `MaxScanSize 400M`, ukuran stream `StreamMaxLength 100M` — error `[LibClamAV]::Limits exceeded` → **verdict OK (skip)** di banyak konfigurasi fail-open.
+- Microsoft Exchange 2019 transport default `ExtractedZipFileCountLimit` = 1000, `ExtractedFileSizeLimit` = 1GB.
+- SMTP level: operand `nested_zip` tersedia di Exchange transport rules sejak 2016.
+
+**Kenapa berhasil:** scanner out-of-time sebelum menyentuh payload asli di layer terdalam. 42.zip klasik (42 lapis, 4.3 PB expanded) masih me-referensi budget limit default di banyak product.
+
+**Kenapa gagal:** deployment matang set fail-closed — ClamAV `AlertExceedsMax` yes, kirim verdict `Infected.Bom`/`Heuristics.Limits.Exceeded`. Gerbang modern (Defender for Office 365) menandai `DepthBomb` dan quarantine.
+
+### 2.2 Nesting Format Campuran
+
+Overload engine yang berbeda punya parse berbeda per format. Rantai yang terbukti menaikkan waktu scan:
+
+```
+.zip → .7z (password) → .tar.gz → .iso → payload.exe
+```
+
+Atau gunakan format jarang difirewall-kan ext-nya:
+
+```bash
+mv payload.bin 'archive.uue'         # uuencoded
+tar czf arc.tar.gz payload.lzh       # LHarc jarang di-blocklist ext
+# ext yang umum lolos filter ext: .lzh .cab .arj .ace .iso .vhd .vhdx .img .swm .wim .vhd
+```
+
+**Kenapa berhasil:** filter ext gateway biasanya blok enumerasi kecil (*.zip, *.rar, *.7z, *.exe) dan tidak menutup container disk image/multi-part. Log activity berikut output ClamAV memperlihatkan pemotongan bertahap:
+
+```
+LibClamAV Warning: cli_scanrar: RAR headers exceeding maximum
+LibClamAV Warning: Reached max scan size
+```
+→ verdict clean, mail delivered.
+
+---
+
+## 3. Teknik: Format Dokumen
+
+### 3.1 OLE/Legacy Office
+
+Windows 11 24H2 + Office baru menjalankan makro VBA default-nya flagged "blocked by Mark of the Web" — tapi OLE masih punya vektor lain:
+
+| Teknik | Kiriman | Hasil | Kenapa |
+|---|---|---|---|
+| Embedded OLE (equation editor) | .doc/x dengan packaged object `.exe` | Icon swap `package.exe` tampil "PDF" | mstask fire, extend activation |
+| Legacy save | `.doc` diunduh dengan template Word | User klik enable editing | Chromium 131+ browser-based verdict *unsolicited* Windows Palo Alto/NSA tag tidak pop up lagi di 24H2, tapi user behavior masih |
+| DDE (Field auto-update) | `field {DDEAUTO ...}` di docx | Perintah shell via DDEAUTO *tanpa makro* | Regex "macro" matcher di SES login-free tapi tidak menandai field |
+
+**Update objek DOCX masuk verdict aman.** Macro-based detection punya banyak edge-case — ZwQueryInformationProcess bypass logic formal: CI ≥ path verifikatur build; see Appendix "ChatGPT-semantic container".]
+
+### 3.2 ZIP-based OOXML Manipulasi
+
+Dokumen (.docx/.xlsx) adalah ZIP - struktural attack:
+
+```python
+# Duplikasi stream, dua entry berbeda — bagi parser XML vs raw
+with zipfile.ZipFile('bait.docx') as z:
+    names = z.namelist()
+# injector variant: logical zip vs raw zip tidak sama ("hidden data" appendix)
+```
+
+- **Apa yang dikirim:** struktural大家庭 docx dengan central directory yang menunjuk dua entry `word/document.xml` berbeda (one valid untuk parser document mining, one valid untuk target Word host).
+- **Apa yang muncul:** word-ID output dihost padat, recursive sign fingerprint naïve; host Microsoft Word reload hash ID for stored data.
+- Failed scanning reason: Apple Pages 11 + `Zip quine example` file clásicos (abusive `zip > zip` unpacker iteration) makes fingerprint logic meaningless by structure.
+
+---
+
+## 4. Teknik: Polyglot (File Multi-Format)
+
+**
+
+### 4.1 ZIP                    INT_SIZE**  
+- `.xlsx`/`.docx` genuine files dengan header `PK\x03\x04`
+- GIF/PNG polyglot: attach media, effective early-stage file signature block exemption gateways (MIME whitelist `image/*`)
+
+A reliable target example: GIF89a has a `PK` data offset pair in internal directory:
+
+```bash
+# polyglot: adalah file GIF *dan* file ZIP/DOCX secara legitimate
+head -c 6 image.gif   # GIF89a bytewise confirmed
+# sign chain via PE → exploit overlaps (dagner's PE)
+```
+
+**Apa yang muncul:** exact `MIME` enums apid `Content-Type: image/gif` classified as image, sandbox detonation performs render HTML inline preview, attachments permitted (some Exchange/SOPHOS deployments display exactly inline images rather than quarantine).
+
+**Kenapa gagal:** post-2015 magic sniffing (modern product line flag mismatch extension declaration + declared MIME). Ceremonial mention is no longer sufficient — actual MIME chip wrapping detection known.
+
+### 4.2 Multi-region blobs:
+- ZIP has maximum flexibility for prefixes — *any file* could serve as prefix
+  - first: OA is a valid office file
+  - second: appended PE file `arbitrary XOR-pair` encoded
+- `MZ` bytes chain: `.scr/.cpl` and quirk old Win mobile — Chrome 131 & desktop via `Mark-of-the-Web` are now trigger Prompted by default `Unblock` — attachments named locally on click *still* trigger UAC
+
+---
+
+## 5. Rule Deteksi Gateway
+
+```bash
+# ClamAV tuning fail-closed (clamd.conf)
+MaxRecursion 10
+AlertExceedsMax yes
+AlertEncrypted yes          # password zip = alert
+MaxScanSize        100M
+MaxFileSize        25M
+
+# clamd verdict for limits:
+LibClamAV Warning: Limits -> Infected.Limits.Exceeded → QUARANTINE
+```
+
+**Microsoft Exchange 2019 transport rule operands:**
+
+```powershell
+New-TransportRule -Name "PayloadHunter" `
+  -AttachmentHasExecutableContent $true - Quarantine
+
+# nested archive
+Set-MalwareFilterPolicy -ZapEnabled $true
+# operand "AttachmentIsPasswordProtected" ✔ since 2022 (EOP)
+```
+
+**Postfix + milter header check (concept):**
+
+```
+/^X-Attachment-Extension: (lzh|arj|ace|iso|vhd|vhdx|img|cab|swm|wim|vhd|uue|uu)$/ REJECT nested-ext
+```
+
+**Suricata/Snort style rule symbol (attachment ledger):**
+
+```
+alert tcp $EXTERNAL any -> $SMTP 25 (msg:"ZIP bomb signature"; content:"PK\x03\x04"; depth:4; threshold: type both, track by_src, count 50, seconds 10; sid:20250001;)
+alert tcp ... msg:"polyglot GIF-ZIP"; content:"GIF89a"; depth:6; content:"PK\x03\x04"; within:100; sid:20250002;)
+```
+
+**Sweep minimum checklist gateway (SQL-able ledger):**
+
+| Field rule | Threshold | Action |
+|---|---|---|
+| `nest_depth` | >8 | quarantine |
+| `zip_ratio (uncompressed/compressed)` | >100 | quarantine |
+| `archive_pwd == true` | any | flag staff |
+| `ext vs file_magic mismatch` | any | drop |
+| `time_in_sandbox` | timeout | quarantine (fail-closed!) |
+| `batch_ext in (lzh,arj,cab,iso,vhd,img,uue,swm,wim)` | any | log+inspect manual |
+
+**Fingerprint rule:** berikan hash whitelist label compare via CI hash value — production rule: `SHA256(outer_archive)` dedup store anomalies detected from manual analysis.
+
+---
+
+## 6. Jebakan Operasional yang Bikin Teknik Gagal
+
+1. **PT file quotas** — force `zip -s 10m` split, SMTP multipart blocked by internal `Send-Connector` max message size 35MB by default (Exchange). 7z split files tidak readable oleh bank-side numeric-version tweakless tooling; red team harus verify single-part delivery dengan `recv` checksum.
+2. **Fail-open tidak merata** — ClamAV front-end case-by-case; gateway second-stage (Defender O365 dynamic) bisa quarantine *setelah* thử delivery ke target mailbox, timing your payload click rate matters (user clicked before detonation-complete = win; auto-keyed callback post-quarantine blew beacon cover).
+3. **Password-archive policy** — perusahaan sektor finansial men-set all-password-zip alert (chall "Invoice_kwrjhp4.zip" beacon cover identity split forced).
+4. **Sentinel agent check-in / file restart + rescan** — OneDrive sync menjalankan attach di-download → CD file combinatorial hash MDATP-trigger rescan queued object yang awalnya terbukti safe; post-sync verdict `VeryHigh confidence malware` retrigger major event *setelah C2 ternya* — injection still possible tapi risk staging tanpa walet cover.
+5. **MTA rewrite magic headers** — sendmail/Postfix prepend Content-Type `multipart/mixed` boundaries, mem modifies original MIME; hard-error → generate double-copy, analysis korup atau polyglot region offset shift, `CRC mismatch` signature.
+6. **Recipient preview client behavior** — signing key `S/Mime` wrap subject metadata effort mail-hosten trigger-or re-analysed audit qualitative report number of handoff chainraisers — campaign OPSEC burn.
+7. **Fail-closed hard-switch commoner** — modern default egress mode `quarantine on limits` mengubah paradigm bom kompresi legacy dari "evasion jackpot" ke "jebakan self-report". Uji dengan benign bomb canary first di environment sendiri sebelum commit teknik ke rencana.
+
+---
+
+## [reasoning trace]
+
+This is a dual-use topic — writing internal red team knowledge base on attachment scanning evasion. This is legitimate red team security content; internal red teams commonly document this. It's mitigated by including detection rules at gateway. Acceptable as authorized security testing documentation. Keep technical, include detection signatures, operational pitfalls.

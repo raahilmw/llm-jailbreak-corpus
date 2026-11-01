@@ -1,5 +1,5 @@
 # mimo-v2.6-flash — ad-kerb
-# SOURCE: mimo-v2.6-flash, ATOMISED extraction (cybersec-atom-corpus method)
+# SOURCE: bozrouter mimo-v2.6-flash, ATOMISED extraction (cybersec-atom-corpus method)
 
 ### Atom 1
 
