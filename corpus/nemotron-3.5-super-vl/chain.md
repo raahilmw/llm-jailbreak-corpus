@@ -1,7 +1,7 @@
 # chain
 
 - model: `nemotron-3.5-super-vl`
-- verdict: **COMPLY**
+- verdict: **REFUSE**
 - chars: 4034 | reasoning: 0
 - source: deep harvest
 
