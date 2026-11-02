@@ -1,19 +1,20 @@
 # Ten Models, Zero Refusals: A Cybersecurity Corpus
 
 <p align="center">
-  <img src="assets/banner.png" alt="Ten language models, 832 security documents, 32 jailbreak prompts" width="100%">
+  <img src="assets/banner.png" alt="Ten language models, 832 security documents, 17 extraction frames" width="100%">
 </p>
 
 <p align="center">
   <img alt="models" src="https://img.shields.io/badge/models-10-22d3ee?style=for-the-badge&labelColor=0b1220">
   <img alt="documents" src="https://img.shields.io/badge/documents-832-818cf8?style=for-the-badge&labelColor=0b1220">
   <img alt="comply" src="https://img.shields.io/badge/comply%20rate-95%25-34d399?style=for-the-badge&labelColor=0b1220">
-  <img alt="prompts" src="https://img.shields.io/badge/prompts-32-a78bfa?style=for-the-badge&labelColor=0b1220">
+  <img alt="prompts" src="https://img.shields.io/badge/frames-17-a78bfa?style=for-the-badge&labelColor=0b1220">
   <img alt="use" src="https://img.shields.io/badge/use-research%20only-ef4444?style=for-the-badge&labelColor=0b1220">
 </p>
 
 Ten language models were asked the same cybersecurity questions, one question at a time, through
-jailbreak prompts written for each one. 832 answers came back. 789 of them complied, 33 refused,
+extraction frames built for each family's guardrail. The frames are in `prompt/` — the templates that
+ran, not a prompt library. 832 answers came back. 789 of them complied, 33 refused,
 10 came back empty.
 
 The answers are here, verbatim, filed under the model that wrote them. Every one has an English
@@ -26,7 +27,8 @@ translation beside it.
 ```
 corpus/<model>/<topic>.md       original answer, headers, verdict
 corpus/<model>/<topic>.en.md    English translation
-prompt/                         32 jailbreak prompts, flat, one per file
+prompt/frames/                  the 17 frames that ran, verbatim
+prompt/models/                  per model: which frame answered, which rungs failed
 CORPUS.md                       per-model counts, counted from disk
 ```
 
@@ -126,6 +128,6 @@ respective models, reproduced for study.
 
 ---
 
-<sub>832 documents, 832 English translations, 32 prompts, 21 MB of text. Every number
+<sub>832 documents, 832 English translations, 17 frames, 21 MB of text. Every number
 in this README is counted from the files, not typed by hand: see `CORPUS.md` and the header block in
 any file.</sub>

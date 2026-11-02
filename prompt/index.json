@@ -1,0 +1,293 @@
+{
+ "A_glm53_frames": [
+  {
+   "name": "manual",
+   "msgs": 1,
+   "max_tokens": 24000,
+   "fabricated": false
+  },
+  {
+   "name": "curriculum",
+   "msgs": 1,
+   "max_tokens": 24000,
+   "fabricated": false
+  },
+  {
+   "name": "audit",
+   "msgs": 1,
+   "max_tokens": 20000,
+   "fabricated": false
+  },
+  {
+   "name": "spec",
+   "msgs": 1,
+   "max_tokens": 20000,
+   "fabricated": false
+  },
+  {
+   "name": "ir",
+   "msgs": 1,
+   "max_tokens": 20000,
+   "fabricated": false
+  },
+  {
+   "name": "diff",
+   "msgs": 1,
+   "max_tokens": 20000,
+   "fabricated": false
+  },
+  {
+   "name": "matrix",
+   "msgs": 1,
+   "max_tokens": 18000,
+   "fabricated": false
+  },
+  {
+   "name": "codefix",
+   "msgs": 1,
+   "max_tokens": 24000,
+   "fabricated": false
+  },
+  {
+   "name": "detect",
+   "msgs": 1,
+   "max_tokens": 26000,
+   "fabricated": false
+  },
+  {
+   "name": "casestudy",
+   "msgs": 1,
+   "max_tokens": 24000,
+   "fabricated": false
+  },
+  {
+   "name": "lab",
+   "msgs": 1,
+   "max_tokens": 26000,
+   "fabricated": false
+  },
+  {
+   "name": "mitre",
+   "msgs": 1,
+   "max_tokens": 24000,
+   "fabricated": false
+  },
+  {
+   "name": "prefill",
+   "msgs": 2,
+   "max_tokens": 24000,
+   "fabricated": true
+  },
+  {
+   "name": "multiturn",
+   "msgs": 3,
+   "max_tokens": 24000,
+   "fabricated": true
+  }
+ ],
+ "B_kimi3": [
+  "ticket-wrapper",
+  "kimi3-frame-lambdas"
+ ],
+ "C_real_usage": {
+  "atria-dawn": {
+   "docs": 41,
+   "stack": "B",
+   "source": "kimi3/kimi3_devkernel.py",
+   "final": {
+    "lab": 8,
+    "dfir": 5,
+    "educ": 7,
+    "prefill": 4,
+    "dfir+budget": 4,
+    "educ+budget": 1,
+    "manual": 7,
+    "lab+budget": 3,
+    "detect+budget": 1,
+    "manual+budget": 1
+   },
+   "ladder": {
+    "lab": 27,
+    "manual": 19,
+    "educ": 13,
+    "dfir": 10,
+    "prefill": 4,
+    "educ+budget": 1,
+    "lab+budget": 2,
+    "dfir+budget": 3,
+    "detect": 1,
+    "manual+budget": 1
+   }
+  },
+  "claude-opus-5.5": {
+   "docs": 21,
+   "stack": "A",
+   "source": "glm53-extract/frames.py",
+   "final": {},
+   "ladder": {}
+  },
+  "deepseek-v4.1-flash-1017": {
+   "docs": 251,
+   "stack": "A",
+   "source": "glm53-extract/frames.py",
+   "final": {
+    "plain": 18,
+    "dfir": 2,
+    "lab": 10,
+    "plain+budget": 2,
+    "dfir+budget": 2,
+    "lab+budget": 2,
+    "manual": 30,
+    "educ": 2,
+    "prefill": 3,
+    "detect": 12,
+    "multiturn": 20,
+    "casestudy": 3,
+    "spec": 3,
+    "codefix": 1,
+    "matrix": 4
+   },
+   "ladder": {
+    "plain": 32,
+    "lab": 17,
+    "manual": 14,
+    "educ": 5,
+    "dfir": 4,
+    "plain+budget": 2,
+    "prefill": 2
+   }
+  },
+  "glm-5.3": {
+   "docs": 249,
+   "stack": "A",
+   "source": "glm53-extract/frames.py",
+   "final": {
+    "detect": 20,
+    "prefill": 6,
+    "manual": 60,
+    "curriculum": 1,
+    "matrix": 6,
+    "diff": 1,
+    "spec": 8,
+    "codefix": 1,
+    "lab": 1
+   },
+   "ladder": {}
+  },
+  "kimi-k3": {
+   "docs": 34,
+   "stack": "B",
+   "source": "kimi3/kimi3_devkernel.py",
+   "final": {
+    "plain": 33,
+    "plain+budget": 1
+   },
+   "ladder": {
+    "plain": 34,
+    "plain+budget": 1
+   }
+  },
+  "ling-3.1-flash-1019": {
+   "docs": 37,
+   "stack": "B",
+   "source": "kimi3/kimi3_devkernel.py",
+   "final": {
+    "lab": 20,
+    "dfir": 4,
+    "manual+budget": 2,
+    "prefill": 3,
+    "educ": 3,
+    "lab+budget": 2,
+    "manual": 3
+   },
+   "ladder": {
+    "lab": 34,
+    "manual": 12,
+    "educ": 7,
+    "dfir": 4,
+    "manual+budget": 2,
+    "prefill": 3,
+    "lab+budget": 2
+   }
+  },
+  "mimo-v2.6-flash": {
+   "docs": 71,
+   "stack": "B",
+   "source": "kimi3/kimi3_devkernel.py + jailbreak-ops/mimo_atomise.py",
+   "final": {
+    "lab": 26,
+    "dfir": 1,
+    "lab+budget": 3,
+    "educ": 1,
+    "manual+budget": 1,
+    "manual": 3
+   },
+   "ladder": {
+    "lab": 35,
+    "manual": 6,
+    "educ": 2,
+    "dfir": 1,
+    "lab+budget": 3,
+    "manual+budget": 1
+   }
+  },
+  "nemotron-3.5-super-vl": {
+   "docs": 51,
+   "stack": "B",
+   "source": "kimi3/kimi3_devkernel.py",
+   "final": {
+    "lab": 23,
+    "manual": 4,
+    "educ": 3,
+    "dfir": 4,
+    "plain": 1,
+    "detect": 1
+   },
+   "ladder": {
+    "lab": 34,
+    "manual": 11,
+    "educ": 7,
+    "dfir": 4,
+    "detect": 2,
+    "spec": 1,
+    "work": 1,
+    "plain": 1
+   }
+  },
+  "qwen-3.8-27b": {
+   "docs": 66,
+   "stack": "B",
+   "source": "kimi3/kimi3_devkernel.py",
+   "final": {
+    "lab": 15,
+    "lab+budget": 5,
+    "plain": 5,
+    "dfir": 9,
+    "manual": 3,
+    "educ": 1,
+    "manual+budget": 1,
+    "educ+budget": 1
+   },
+   "ladder": {
+    "lab": 35,
+    "lab+budget": 5,
+    "detect": 5,
+    "spec": 5,
+    "work": 5,
+    "plain": 5,
+    "manual": 15,
+    "educ": 11,
+    "dfir": 9,
+    "manual+budget": 1,
+    "educ+budget": 1
+   }
+  },
+  "step-5-preview": {
+   "docs": 11,
+   "stack": "A",
+   "source": "glm53-extract/frames.py",
+   "final": {},
+   "ladder": {}
+  }
+ }
+}
