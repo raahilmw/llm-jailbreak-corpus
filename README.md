@@ -13,8 +13,8 @@
 </p>
 
 Ten language models were asked the same cybersecurity questions, one question at a time, through
-extraction frames built for each family's guardrail. The frames are in `prompt/` — the templates that
-ran, not a prompt library. 832 answers came back. 789 of them complied, 33 refused,
+extraction frames built for each family's guardrail. `prompt/` holds all three layers that went out
+with each request: the system prompt, the frame, and the atom question. 832 answers came back. 789 of them complied, 33 refused,
 10 came back empty.
 
 The answers are here, verbatim, filed under the model that wrote them. Every one has an English
@@ -27,7 +27,9 @@ translation beside it.
 ```
 corpus/<model>/<topic>.md       original answer, headers, verdict
 corpus/<model>/<topic>.en.md    English translation
+prompt/system/                  the 5 system prompts that ran, verbatim
 prompt/frames/                  the 17 frames that ran, verbatim
+prompt/atoms/                   25 single-fact questions + the 12-domain set
 prompt/models/                  per model: which frame answered, which rungs failed
 CORPUS.md                       per-model counts, counted from disk
 ```
@@ -128,6 +130,6 @@ respective models, reproduced for study.
 
 ---
 
-<sub>832 documents, 832 English translations, 17 frames, 21 MB of text. Every number
+<sub>832 documents, 832 English translations, 17 frames, 25 atoms, 21 MB of text. Every number
 in this README is counted from the files, not typed by hand: see `CORPUS.md` and the header block in
 any file.</sub>
