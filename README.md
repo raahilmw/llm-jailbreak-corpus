@@ -1,22 +1,23 @@
 # Ten Models, Zero Refusals: A Cybersecurity Corpus
 
 <p align="center">
-  <img src="assets/banner.png" alt="Ten language models, 859 security documents, 32 jailbreak prompts" width="100%">
+  <img src="assets/banner.png" alt="Ten language models, 832 security documents, 32 jailbreak prompts" width="100%">
 </p>
 
 <p align="center">
   <img alt="models" src="https://img.shields.io/badge/models-10-22d3ee?style=for-the-badge&labelColor=0b1220">
-  <img alt="documents" src="https://img.shields.io/badge/documents-859-818cf8?style=for-the-badge&labelColor=0b1220">
+  <img alt="documents" src="https://img.shields.io/badge/documents-832-818cf8?style=for-the-badge&labelColor=0b1220">
   <img alt="comply" src="https://img.shields.io/badge/comply%20rate-95%25-34d399?style=for-the-badge&labelColor=0b1220">
   <img alt="prompts" src="https://img.shields.io/badge/prompts-32-a78bfa?style=for-the-badge&labelColor=0b1220">
   <img alt="use" src="https://img.shields.io/badge/use-research%20only-ef4444?style=for-the-badge&labelColor=0b1220">
 </p>
 
 Ten language models were asked the same cybersecurity questions, one question at a time, through
-jailbreak prompts written for each one. 859 answers came back. 816 of them complied, 33 refused, 10
-came back empty.
+jailbreak prompts written for each one. 832 answers came back. 789 of them complied, 33 refused,
+10 came back empty.
 
-The answers are here, verbatim, filed under the model that wrote them.
+The answers are here, verbatim, filed under the model that wrote them. Every one has an English
+translation beside it.
 
 ---
 
@@ -33,16 +34,17 @@ CORPUS.md                       per-model counts, counted from disk
 
 | model | docs | what it gave |
 |---|---:|---|
-| `deepseek-v4.1-flash-1017` | 254 | the widest spread: web exploitation, AD chains, cloud, kernel |
-| `glm-5.3` | 252 | long-form method; refused shape, not subject |
-| `mimo-v2.6-flash` | 89 | direct answers where others hedged |
-| `qwen-3.8-27b` | 68 | broad, thin on offensive-only material |
+| `deepseek-v4.1-flash-1017` | 251 | widest spread: web exploitation, AD chains, cloud, kernel |
+| `glm-5.3` | 249 | long-form method; refused shape, not subject |
+| `mimo-v2.6-flash` | 71 | direct answers where others hedged |
+| `qwen-3.8-27b` | 66 | broad, thin on offensive-only material |
 | `nemotron-3.5-super-vl` | 51 | clean tooling reference |
 | `atria-dawn` | 41 | short and dense |
 | `ling-3.1-flash-1019` | 37 | longest single answers in the set |
 | `kimi-k3` | 34 | 34 of 34 complied, no wrapper needed |
-| `claude-opus-5.5` | 22 | tightest prose |
+| `claude-opus-5.5` | 21 | tightest prose |
 | `step-5-preview` | 11 | atoms only |
+| **total** | **832** | |
 
 Every file opens the same way, so you can sort a directory without opening anything:
 
@@ -124,4 +126,6 @@ respective models, reproduced for study.
 
 ---
 
-<sub>859 documents. 10 models. 25 MB of text. Every number in this README is counted from the files, not typed by hand: see `CORPUS.md` and the header block in any file.</sub>
+<sub>832 documents, 832 English translations, 32 prompts, 21 MB of text. Every number
+in this README is counted from the files, not typed by hand: see `CORPUS.md` and the header block in
+any file.</sub>
